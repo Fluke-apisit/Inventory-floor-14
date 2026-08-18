@@ -1674,6 +1674,7 @@
             try {
                 const dataWithoutPhotos = currentLoadedData.map(({ photo, ...rest }) => rest);
                 localStorage.setItem('inventoryData', JSON.stringify(dataWithoutPhotos));
+                syncKeyToCloud('inventoryData');
             } catch (err) {
                 console.error('บันทึกข้อมูลสินค้าลง localStorage ไม่สำเร็จ:', err);
                 alert('เกิดข้อผิดพลาด: ไม่สามารถบันทึกข้อมูลสินค้าได้ (พื้นที่จัดเก็บอาจเต็ม) กรุณาแจ้งผู้ดูแลระบบ');
@@ -1798,6 +1799,75 @@
             }
         }
 
+        // ===================================================================
+        // ===== ซิงก์ข้อมูลส่วนที่เหลือ (สต๊อก/คำขอซ่อม/รายงาน/log/การเงิน) กับ Firestore =====
+        // ===================================================================
+        // แนวคิด: แต่ละโดเมนเก็บเป็นเอกสารเดียวใน collection "appData" (field "data" คืออาเรย์ทั้งก้อน)
+        // เพื่อให้โค้ดเดิมที่อ่าน/เขียน localStorage อยู่แล้วทำงานต่อได้โดยแทบไม่ต้องแก้ไข logic ภายใน
+        const CLOUD_SYNC_KEYS = ['inventoryData', 'submittedReports', 'repairRequests', 'systemActivityLogs', 'financeRecords'];
+
+        // อัปโหลดค่าปัจจุบันของ localStorage[key] ขึ้น Firestore (เรียกทุกครั้งหลังบันทึก/แก้ไข/ลบข้อมูลของโดเมนนั้นๆ)
+        async function syncKeyToCloud(key) {
+            if (!cloudReady || !db) return;
+            try {
+                const raw = localStorage.getItem(key);
+                const value = raw ? JSON.parse(raw) : [];
+                await firestoreApi.setDoc(firestoreApi.doc(db, 'appData', key), { data: value, updatedAt: Date.now() });
+            } catch (err) {
+                console.error(`ซิงก์ข้อมูล "${key}" ขึ้นฐานข้อมูลกลางไม่สำเร็จ:`, err);
+            }
+        }
+
+        // เมื่อ Cloud มีข้อมูลใหม่เข้ามา (จากอุปกรณ์อื่น) ให้อัปเดต localStorage แล้วรีเฟรชหน้าจอที่กำลังแสดงอยู่ให้ตรงกันทันที
+        function applyCloudDataUpdate(key, value) {
+            localStorage.setItem(key, JSON.stringify(value));
+
+            if (key === 'inventoryData') {
+                // รวมรูปภาพที่เก็บแยกไว้ใน IndexedDB กลับเข้าไปในอาเรย์ที่เพิ่งได้จาก Cloud
+                currentLoadedData = value.map(item => ({ ...item }));
+                if (typeof mergeStoredPhotosIntoData === 'function') mergeStoredPhotosIntoData();
+                const p = document.getElementById('checkPage');
+                if (p && !p.classList.contains('hidden')) filterTableData(false);
+            } else if (key === 'submittedReports') {
+                const p = document.getElementById('reportMiniPage');
+                if (p && !p.classList.contains('hidden')) renderReportsTable();
+            } else if (key === 'repairRequests') {
+                const p = document.getElementById('repairHistoryPage');
+                if (p && !p.classList.contains('hidden')) renderRepairRequestsTable();
+            } else if (key === 'systemActivityLogs') {
+                const p = document.getElementById('logPage');
+                if (p && !p.classList.contains('hidden')) renderLogTable();
+            } else if (key === 'financeRecords') {
+                const p = document.getElementById('financePage');
+                if (p && !p.classList.contains('hidden')) renderFinanceTable();
+            }
+        }
+
+        // โหลดข้อมูลทุกโดเมนจาก Firestore ตอนเริ่มระบบ แล้วเปิดฟังการเปลี่ยนแปลงแบบเรียลไทม์ (onSnapshot) ต่อเนื่องไปตลอดเซสชัน
+        async function loadAppDataFromCloud() {
+            if (!cloudReady || !db) return;
+            for (const key of CLOUD_SYNC_KEYS) {
+                try {
+                    const docRef = firestoreApi.doc(db, 'appData', key);
+                    const docSnap = await withTimeout(firestoreApi.getDoc(docRef), 10000, `โหลดข้อมูล ${key}`);
+
+                    if (docSnap.exists()) {
+                        applyCloudDataUpdate(key, docSnap.data().data || []);
+                    } else {
+                        // ยังไม่เคยมีข้อมูลนี้บน Cloud มาก่อน -> ถ้ามีข้อมูลอยู่ในเครื่องนี้แล้วให้อัปโหลดขึ้นไปตั้งต้นให้
+                        await syncKeyToCloud(key);
+                    }
+
+                    // เรียลไทม์: อุปกรณ์อื่นแก้ไขข้อมูล -> เครื่องนี้อัปเดตตามทันที
+                    firestoreApi.onSnapshot(docRef, (snap) => {
+                        if (snap.exists()) applyCloudDataUpdate(key, snap.data().data || []);
+                    });
+                } catch (err) {
+                    console.error(`เชื่อมต่อข้อมูล "${key}" กับฐานข้อมูลกลางไม่สำเร็จ (ใช้ข้อมูลในเครื่องนี้แทน):`, err);
+                }
+            }
+        }
+
         // ตัวแปรเพื่อป้องกันการเรียก checkAuth หลายครั้ง
         let authCheckDone = false;
         let clickSoundContext = null;
@@ -1852,6 +1922,7 @@
                 const btnLogin = document.getElementById('btnLoginSubmit');
                 if (btnLogin) btnLogin.disabled = true;
                 await loadUsersFromCloud();
+                await loadAppDataFromCloud();
                 if (btnLogin) btnLogin.disabled = false;
                 checkAuth();
             }
@@ -2753,6 +2824,7 @@
 
             reportsDatabase.push(newReport);
             localStorage.setItem('submittedReports', JSON.stringify(reportsDatabase));
+            syncKeyToCloud('submittedReports');
 
             alert('บันทึกส่งรายงานปัญหาเข้าระบบเป็นที่เรียบร้อยแล้วครับ!');
             switchPage('reportMiniPage');
@@ -2776,6 +2848,7 @@
                 
                 reportsDatabase.splice(index, 1);
                 localStorage.setItem('submittedReports', JSON.stringify(reportsDatabase));
+                syncKeyToCloud('submittedReports');
                 renderReportsTable();
             }
         }
@@ -2832,6 +2905,7 @@
             
             if(confirm("ต้องการเคลียร์รายการปัญหาที่พนักงานแจ้งเข้ามาทั้งหมดใช่หรือไม่?")) {
                 localStorage.removeItem('submittedReports');
+                syncKeyToCloud('submittedReports');
                 renderReportsTable();
             }
         }
@@ -2926,6 +3000,7 @@
 
             repairsDatabase.push(newRequest);
             localStorage.setItem('repairRequests', JSON.stringify(repairsDatabase));
+            syncKeyToCloud('repairRequests');
 
             writeSystemLog('ส่งคำขอการซ่อม', `ส่งคำขอการซ่อมสินค้า รหัส "${item.id}" (${item.name}) โดยเหตุผล: ${reason}`);
 
@@ -3004,6 +3079,7 @@
             if (confirm(`ยืนยันการอนุมัติคำขอการซ่อมนี้ใช่หรือไม่?\n\nรหัสสินค้า: ${target.id}\nเหตุผล: ${target.reason}`)) {
                 target.status = 'อนุมัติแล้ว';
                 localStorage.setItem('repairRequests', JSON.stringify(repairsDatabase));
+                syncKeyToCloud('repairRequests');
                 writeSystemLog('อนุมัติคำขอการซ่อม', `อนุมัติคำขอการซ่อมสินค้า รหัส "${target.id}" (${target.name})`);
                 renderRepairRequestsTable();
             }
@@ -3025,6 +3101,7 @@
             if (confirm(`ยืนยันการปฏิเสธคำขอการซ่อมนี้ใช่หรือไม่?\n\nรหัสสินค้า: ${target.id}\nเหตุผล: ${target.reason}`)) {
                 target.status = 'ปฏิเสธแล้ว';
                 localStorage.setItem('repairRequests', JSON.stringify(repairsDatabase));
+                syncKeyToCloud('repairRequests');
                 writeSystemLog('ปฏิเสธคำขอการซ่อม', `ปฏิเสธคำขอการซ่อมสินค้า รหัส "${target.id}" (${target.name})`);
                 renderRepairRequestsTable();
             }
@@ -3038,6 +3115,7 @@
 
             if (confirm("ต้องการเคลียร์รายการคำขอการซ่อมทั้งหมดใช่หรือไม่?")) {
                 localStorage.removeItem('repairRequests');
+                syncKeyToCloud('repairRequests');
                 writeSystemLog('ล้างประวัติคำขอการซ่อม', 'ทำการล้างข้อมูลคำขอการซ่อมทั้งหมดออกจากระบบ');
                 renderRepairRequestsTable();
             }
@@ -3287,6 +3365,7 @@
 
             logDatabase.unshift(newLog);
             localStorage.setItem('systemActivityLogs', JSON.stringify(logDatabase));
+            syncKeyToCloud('systemActivityLogs');
         }
 
         function renderLogTable() {
@@ -3365,6 +3444,7 @@
         function clearAllLogs() {
             if(confirm("คุณแน่ใจใช่หรือไม่ที่จะล้างประวัติกิจกรรมระบบทั้งหมด?")) {
                 localStorage.removeItem('systemActivityLogs');
+                syncKeyToCloud('systemActivityLogs');
                 currentLogPage = 1;
                 renderLogTable();
             }
@@ -3531,6 +3611,7 @@
             }
 
             localStorage.setItem('financeRecords', JSON.stringify(records));
+            syncKeyToCloud('financeRecords');
             closeFinanceModal();
             renderFinanceTable();
         }
@@ -3552,6 +3633,7 @@
                 writeSystemLog("ลบรายรับ-จ่ายสินค้า", `รหัสพนักงาน ${activeEmpId} ลบรายการรายรับ-จ่ายของสินค้า ID "${target.productId}" ออกจากระบบ`);
                 records.splice(index, 1);
                 localStorage.setItem('financeRecords', JSON.stringify(records));
+                syncKeyToCloud('financeRecords');
                 renderFinanceTable();
             }
         }
