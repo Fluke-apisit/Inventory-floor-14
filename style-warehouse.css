@@ -1,0 +1,497 @@
+/* =========================================================================
+   ระบบ Inventory ชั้น 14 — Dark Warehouse Theme
+   อ้างอิงจากภาพเกม "คลังสายพานสินค้า": พื้นหลังเข้ม, กรอบเหลือง-ดำ (hazard stripe),
+   การ์ดเข้มขอบบาง, แถบสีเน้นสถานะ, ปุ่มหลักโทนเหลือง
+   ========================================================================= */
+
+:root {
+  --bg-page: #14151f;
+  --bg-page-2: #191a26;
+  --surface-1: #1e2030;
+  --surface-2: #262a3d;
+  --surface-3: #2e3247;
+  --border-soft: #363b52;
+  --border-softer: #2a2e42;
+  --text-hi: #f2f3f8;
+  --text-mid: #b7bcd6;
+  --text-low: #7d82a3;
+  --accent-yellow: #ffcc33;
+  --accent-yellow-dark: #1a1a1a;
+  --accent-red: #ff4d4d;
+  --hazard-dark: #1a1a1a;
+}
+
+* { font-family: 'Sarabun', sans-serif !important; }
+
+html, body {
+  background: var(--bg-page) !important;
+  color: var(--text-mid);
+}
+
+body {
+  background:
+    radial-gradient(circle at 15% 0%, #23253a 0%, transparent 45%),
+    radial-gradient(circle at 100% 100%, #1b2436 0%, transparent 40%),
+    var(--bg-page) !important;
+  background-attachment: fixed;
+}
+
+/* ---------- hazard stripe utility (ยางลายกันชนเหลือง-ดำจากภาพอ้างอิง) ---------- */
+.hazard-stripe {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--accent-yellow) 0px, var(--accent-yellow) 14px,
+    var(--hazard-dark) 14px, var(--hazard-dark) 28px
+  );
+}
+
+header,
+header[class*="bg-[#ff4d4d]"] {
+  background: linear-gradient(180deg, var(--bg-page-2) 0%, #12131c 100%) !important;
+  border-bottom: none !important;
+  box-shadow: 0 2px 0 0 var(--accent-yellow), 0 6px 18px rgba(0,0,0,0.45) !important;
+  position: relative;
+}
+header::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: -6px;
+  height: 6px;
+  background: repeating-linear-gradient(
+    45deg,
+    var(--accent-yellow) 0px, var(--accent-yellow) 10px,
+    var(--hazard-dark) 10px, var(--hazard-dark) 20px
+  );
+  opacity: 0.9;
+}
+header h1 {
+  color: var(--text-hi) !important;
+  background: linear-gradient(90deg, #ffe27a, var(--accent-yellow));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+header p { color: var(--text-low) !important; }
+#headerUsername { color: var(--text-hi) !important; }
+#headerUserRole { color: var(--accent-yellow) !important; }
+header button svg { color: var(--text-hi) !important; }
+header button.p-1\.5:hover { background: rgba(255,255,255,0.08) !important; }
+
+/* header small status buttons keep their signal colors but glow slightly on dark */
+header [onclick="switchPage('reportMiniPage')"],
+header [onclick="triggerExcelRefresh()"],
+header [onclick="logout()"] {
+  box-shadow: 0 0 8px rgba(255,255,255,0.15);
+}
+
+/* ---------- login screen ---------- */
+#loginView { background: transparent; }
+#loginView .max-w-md {
+  background: var(--surface-1) !important;
+  border: 1px solid var(--border-soft) !important;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.55) !important;
+}
+#loginView .bg-\[\#ff4d4d\] {
+  background: var(--bg-page-2) !important;
+  border-bottom: 4px solid transparent;
+  border-image: repeating-linear-gradient(45deg, var(--accent-yellow) 0 10px, var(--hazard-dark) 10px 20px) 1;
+}
+#loginView .bg-\[\#ff4d4d\] h1 { color: var(--accent-yellow) !important; }
+#loginView .bg-\[\#ff4d4d\] p { color: var(--text-mid) !important; }
+#loginView label { color: var(--text-mid) !important; }
+#loginView input {
+  background: var(--surface-2) !important;
+  border-color: var(--border-soft) !important;
+  color: var(--text-hi) !important;
+}
+#loginView input::placeholder { color: var(--text-low) !important; }
+#loginForm button[type="submit"] {
+  background: var(--accent-yellow) !important;
+  color: var(--accent-yellow-dark) !important;
+  box-shadow: 0 6px 16px rgba(255,204,51,0.25);
+}
+#loginForm button[type="submit"]:hover { background: #ffd966 !important; }
+
+/* ---------- sidebar ---------- */
+aside#sidebar {
+  background: var(--surface-1) !important;
+  border-right: 1px solid var(--border-softer);
+  box-shadow: 4px 0 16px rgba(0,0,0,0.35);
+}
+aside p.text-gray-400 { color: var(--text-low) !important; letter-spacing: .08em; }
+.menu-btn { color: var(--text-mid) !important; transition: all .15s ease; }
+.menu-btn:hover { background: rgba(255,255,255,0.06) !important; color: var(--text-hi) !important; }
+/* active state override (JS sets bg-red-50 text-red-600 as the "active" marker) */
+.menu-btn.bg-red-50,
+.menu-btn[class*="bg-red-50"] {
+  background: rgba(255,204,51,0.12) !important;
+  color: var(--accent-yellow) !important;
+  border-left: 3px solid var(--accent-yellow);
+  box-shadow: inset 0 0 0 1px rgba(255,204,51,0.15);
+}
+
+/* ---------- generic surfaces ---------- */
+main { background: transparent !important; }
+
+.bg-white {
+  background: var(--surface-1) !important;
+}
+.bg-gray-50 { background: var(--surface-2) !important; }
+.bg-gray-100 { background: var(--surface-2) !important; }
+.bg-gray-200 { background: var(--surface-3) !important; }
+.bg-gray-300 { background: var(--border-soft) !important; }
+
+.border-gray-100, .border-gray-200, .border-gray-300 {
+  border-color: var(--border-soft) !important;
+}
+.divide-gray-200 > * + * { border-color: var(--border-softer) !important; }
+
+.text-gray-400 { color: var(--text-low) !important; }
+.text-gray-500 { color: var(--text-low) !important; }
+.text-gray-600 { color: var(--text-mid) !important; }
+.text-gray-700 { color: var(--text-mid) !important; }
+.text-gray-800 { color: var(--text-hi) !important; }
+.text-gray-900 { color: var(--text-hi) !important; }
+
+.shadow-sm, .shadow-md, .shadow-lg, .shadow-xl, .shadow-inner {
+  box-shadow: 0 4px 18px rgba(0,0,0,0.35) !important;
+}
+
+/* card top corner accent — echoes the yellow/black corner tape in the reference image */
+.rounded-2xl.border, .rounded-xl.border {
+  position: relative;
+}
+
+/* ---------- dashboard stat cards ---------- */
+.rounded-2xl.shadow-sm.p-6 {
+  background: var(--surface-1) !important;
+  border-color: var(--border-soft) !important;
+}
+.from-blue-50   { --tw-gradient-from: #16233b !important; --tw-gradient-to: rgb(22 35 59 / 0) !important; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important; }
+.from-green-50  { --tw-gradient-from: #142c22 !important; --tw-gradient-to: rgb(20 44 34 / 0) !important; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important; }
+.from-red-50    { --tw-gradient-from: #331515 !important; --tw-gradient-to: rgb(51 21 21 / 0) !important; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important; }
+.from-amber-50  { --tw-gradient-from: #332a12 !important; --tw-gradient-to: rgb(51 42 18 / 0) !important; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important; }
+.from-rose-50   { --tw-gradient-from: #331823 !important; --tw-gradient-to: rgb(51 24 35 / 0) !important; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important; }
+.from-purple-50 { --tw-gradient-from: #241a3b !important; --tw-gradient-to: rgb(36 26 59 / 0) !important; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important; }
+.to-white       { --tw-gradient-to: var(--surface-1) !important; }
+
+.bg-blue-50 { background: rgba(59,130,246,0.14) !important; }
+.border-blue-200   { border-color: #2f4a75 !important; }
+.border-green-200  { border-color: #2b6b4c !important; }
+.border-red-200    { border-color: #7a3a3a !important; }
+.border-amber-200  { border-color: #7a6320 !important; }
+.border-rose-200   { border-color: #7a3552 !important; }
+.border-purple-200 { border-color: #503a7a !important; }
+
+.bg-blue-500  { background: #3b82f6 !important; }
+.bg-green-500 { background: #10b981 !important; }
+.bg-red-500   { background: #f43f5e !important; }
+.bg-amber-500 { background: #f59e0b !important; }
+.bg-rose-600  { background: #e11d48 !important; }
+.bg-purple-500{ background: #a855f7 !important; }
+
+.text-blue-500  { color: #60a5fa !important; }
+.text-green-500 { color: #4ade80 !important; }
+.text-red-500   { color: #fb7185 !important; }
+.text-amber-500 { color: #fbbf24 !important; }
+.text-rose-600  { color: #fb7185 !important; }
+.text-purple-500{ color: #c084fc !important; }
+
+.bg-blue-100   { background: rgba(59,130,246,0.16) !important; }
+.bg-green-100  { background: rgba(16,185,129,0.16) !important; }
+.bg-red-100    { background: rgba(244,63,94,0.16) !important; }
+.bg-amber-100  { background: rgba(245,158,11,0.16) !important; }
+.bg-rose-100   { background: rgba(244,63,94,0.16) !important; }
+.bg-purple-100 { background: rgba(168,85,247,0.18) !important; }
+.bg-emerald-100 { background: rgba(16,185,129,0.18) !important; }
+
+.text-blue-700  { color: #7fb2ff !important; }
+.text-green-700 { color: #5eead4 !important; }
+.text-red-700   { color: #ff9b9b !important; }
+.text-amber-700 { color: #ffcf70 !important; }
+.text-amber-600 { color: #ffcf70 !important; }
+.text-rose-700  { color: #ff9bb5 !important; }
+.text-purple-700{ color: #d0a3ff !important; }
+.text-emerald-700{ color: #6ee7b7 !important; }
+
+.bg-blue-200, .bg-green-200, .bg-red-200 { filter: brightness(1.15); }
+.hover\:bg-blue-200:hover  { background: rgba(59,130,246,0.28) !important; }
+.hover\:bg-green-200:hover { background: rgba(16,185,129,0.28) !important; }
+.hover\:bg-red-200:hover   { background: rgba(244,63,94,0.28) !important; }
+
+/* ---------- tables ---------- */
+.table-scroll-container {
+  max-height: 62vh;
+  overflow: auto;
+}
+.sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--surface-2) !important;
+}
+.sticky-header th { color: var(--text-hi) !important; }
+table tbody tr:hover { background: rgba(255,204,51,0.10) !important; }
+table tbody tr:hover td { color: var(--text-hi) !important; }
+
+/* rows use the literal Tailwind classes hover:bg-gray-50 (all tables) and
+   bg-blue-50/90 (selected row in check-stock) — override these directly,
+   with enough specificity to beat Tailwind's own utility CSS */
+tbody tr[class*="hover:bg-gray-50"]:hover,
+tbody tr[class*="hover:bg-gray-50"]:hover.transition {
+  background: rgba(255,204,51,0.10) !important;
+}
+tbody tr[class*="hover:bg-gray-50"]:hover td {
+  color: var(--text-hi) !important;
+}
+tbody tr[class*="bg-blue-50"] {
+  background: rgba(59,130,246,0.16) !important;
+}
+tbody tr[class*="bg-blue-50"] td {
+  color: var(--text-hi) !important;
+}
+tbody tr[class*="bg-blue-50"]:hover {
+  background: rgba(59,130,246,0.24) !important;
+}
+#inventoryTableBody, #logTableBody, #reportsTableBody, #usersTableBody {
+  background: var(--surface-1) !important;
+}
+
+/* ---------- inputs / focus rings ---------- */
+input, textarea, select {
+  background: var(--surface-2) !important;
+  border-color: var(--border-soft) !important;
+  color: var(--text-hi) !important;
+}
+input::placeholder, textarea::placeholder { color: var(--text-low) !important; }
+input[readonly] { background: var(--surface-3) !important; color: var(--text-low) !important; }
+.ring-red-400:focus, .ring-blue-400:focus, .ring-purple-400:focus {
+  --tw-ring-color: var(--accent-yellow) !important;
+}
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(255,204,51,0.35) !important;
+}
+
+/* ---------- primary action buttons (bracket / arbitrary colors) ---------- */
+[class*="bg-[#ff4d4d]"] {
+  background: var(--accent-yellow) !important;
+  color: var(--accent-yellow-dark) !important;
+}
+[class*="bg-[#ff4d4d]"]:hover:not(header) { background: #ffd966 !important; }
+header[class*="bg-[#ff4d4d]"]:hover {
+  background: linear-gradient(180deg, var(--bg-page-2) 0%, #12131c 100%) !important;
+}
+
+/* destructive actions stay red, not the primary yellow */
+#btnActionDelete {
+  background: var(--accent-red) !important;
+  color: #fff !important;
+}
+#btnActionDelete:hover { background: #e5484d !important; }
+
+[class*="bg-[#2196f3]"] { background: #2f6fed !important; color: #fff !important; }
+[class*="bg-[#2196f3]"]:hover { background: #4a82f0 !important; }
+
+[class*="bg-[#00e676]"] { background: #16c784 !important; color: #06231a !important; }
+[class*="bg-[#00e676]"]:hover { background: #21e298 !important; }
+
+[class*="bg-[#d50000]"] { background: #e5484d !important; }
+
+[class*="bg-[#ffeb3b]"] { background: var(--accent-yellow) !important; color: var(--accent-yellow-dark) !important; }
+
+[class*="bg-[#7c3aed]"] { background: #8b5cf6 !important; color: #fff !important; }
+[class*="bg-[#7c3aed]"]:hover { background: #9d70f7 !important; }
+
+/* neutral / secondary buttons */
+.bg-gray-100.hover\:bg-gray-200,
+button.bg-gray-100 {
+  background: var(--surface-3) !important;
+  color: var(--text-hi) !important;
+  border-color: var(--border-soft) !important;
+}
+.bg-gray-200.hover\:bg-gray-300 {
+  background: var(--surface-3) !important;
+  color: var(--text-hi) !important;
+}
+
+/* ---------- modals ---------- */
+.fixed.inset-0.bg-black\/60 { background: rgba(6,7,12,0.72) !important; backdrop-filter: blur(2px); }
+#editModal .max-w-lg, #userModal .max-w-lg {
+  background: var(--surface-1) !important;
+  box-shadow: 0 24px 70px rgba(0,0,0,0.6) !important;
+}
+
+/* ---------- scrollbars ---------- */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--bg-page-2); }
+::-webkit-scrollbar-thumb { background: var(--border-soft); border-radius: 6px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-yellow); }
+
+/* ---------- misc ---------- */
+.animate-pulse { animation: pulse 1.6s cubic-bezier(0.4,0,0.6,1) infinite; }
+
+/* ========== Camera Page Styles ========== */
+#cameraPreview {
+  background: var(--bg-page-2) !important;
+  border: 2px solid var(--border-soft) !important;
+}
+
+#videoStream {
+  background: var(--bg-page) !important;
+}
+
+#capturedPhotoContainer {
+  background: var(--surface-2) !important;
+  border-color: var(--border-soft) !important;
+}
+
+#productListContainer {
+  background: var(--surface-2) !important;
+  border-color: var(--border-soft) !important;
+}
+
+#productListContainer button {
+  color: var(--text-mid) !important;
+  border-color: var(--border-softer) !important;
+}
+
+#productListContainer button:hover {
+  background: rgba(255,204,51,0.08) !important;
+  color: var(--accent-yellow) !important;
+}
+
+#cameraSelect {
+  background: var(--surface-2) !important;
+  border-color: var(--border-soft) !important;
+  color: var(--text-hi) !important;
+}
+
+#cameraSelect option {
+  background: var(--surface-1);
+  color: var(--text-hi);
+}
+
+#productSearch {
+  background: var(--surface-2) !important;
+  border-color: var(--border-soft) !important;
+  color: var(--text-hi) !important;
+}
+
+#productSearch::placeholder {
+  color: var(--text-low) !important;
+}
+
+/* Camera Page Info Cards */
+#cameraPage .bg-white {
+  background: var(--surface-1) !important;
+  border-color: var(--border-soft) !important;
+}
+
+#cameraPage label {
+  color: var(--text-mid) !important;
+}
+
+#cameraPage h3 {
+  color: var(--text-hi) !important;
+}
+
+#cameraPage p {
+  color: var(--text-mid) !important;
+}
+
+#selectedProductId,
+#selectedProductName,
+#selectedProductType,
+#selectedProductStatus {
+  color: var(--text-hi) !important;
+}
+
+/* Button Styles for Camera */
+#btnStartCamera {
+  background: #16c784 !important;
+  color: #fff !important;
+}
+
+#btnStartCamera:hover:not(:disabled) {
+  background: #21e298 !important;
+}
+
+#btnStartCamera:disabled {
+  background: var(--text-low) !important;
+  opacity: 0.5 !important;
+}
+
+#btnStopCamera {
+  background: #ff4d4d !important;
+  color: #fff !important;
+}
+
+#btnStopCamera:hover:not(:disabled) {
+  background: #e5484d !important;
+}
+
+#btnStopCamera:disabled {
+  background: var(--text-low) !important;
+  opacity: 0.5 !important;
+}
+
+#btnCapturePhoto {
+  background: #2f6fed !important;
+  color: #fff !important;
+}
+
+#btnCapturePhoto:hover:not(:disabled) {
+  background: #4a82f0 !important;
+}
+
+#btnCapturePhoto:disabled {
+  background: var(--text-low) !important;
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+#btnClearPhoto {
+  background: var(--text-low) !important;
+  color: #fff !important;
+}
+
+#btnClearPhoto:hover:not(:disabled) {
+  background: var(--text-mid) !important;
+}
+
+#btnClearPhoto:disabled {
+  background: var(--border-soft) !important;
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+#btnSavePhoto {
+  background: var(--accent-yellow) !important;
+  color: var(--accent-yellow-dark) !important;
+  box-shadow: 0 6px 16px rgba(255,204,51,0.25) !important;
+}
+
+#btnSavePhoto:hover:not(:disabled) {
+  background: #ffd966 !important;
+}
+
+#btnSavePhoto:disabled {
+  background: var(--text-low) !important;
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+/* Camera No Camera Message */
+#noCameraMsg {
+  background: var(--bg-page-2) !important;
+  color: var(--text-mid) !important;
+}
+
+#noCameraMsg p {
+  color: var(--text-hi) !important;
+}
+
+#noCameraMsg .text-gray-300 {
+  color: var(--text-low) !important;
+}

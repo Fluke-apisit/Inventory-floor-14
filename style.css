@@ -1,0 +1,919 @@
+/* =========================================================================
+   ระบบ Inventory ชั้น 14 — "COSMOS" Sci-Fi Neon Space Theme
+   พื้นหลัง: อวกาศเข้มลึก + ดาวเรืองแสง + เมฆแสงนีออน (nebula) 
+   สีเด่น: ม่วงนีออน, ฟ้าเข้ม, ชมพูไซเบอร์, แสงอิเล็กตรอน
+   ลวดลาย: ตารางเลขฐาน16 (hex grid) ไนออน, เอฟเฟกต์พลาสมา
+   ========================================================================= */
+
+:root {
+  /* Space background - deep dark with purple/blue tint */
+  --bg-page: #0a0e27;
+  --bg-page-2: #0d1135;
+  
+  /* Surfaces with neon glow */
+  --surface-1: rgba(15, 12, 35, 0.88);
+  --surface-2: rgba(20, 18, 50, 0.85);
+  --surface-3: rgba(30, 25, 70, 0.82);
+  
+  /* Neon borders */
+  --border-soft: rgba(147, 51, 234, 0.35);      /* neon purple */
+  --border-softer: rgba(236, 72, 153, 0.18);    /* neon pink */
+  
+  /* Text hierarchy */
+  --text-hi: #f0e7ff;
+  --text-mid: #b4a5d6;
+  --text-low: #7a6fa3;
+
+  /* Neon accent colors */
+  --accent-purple: #b84aff;      /* vibrant neon purple */
+  --accent-pink: #ff006e;        /* cyber pink */
+  --accent-cyan: #00d9ff;        /* neon cyan */
+  --accent-electric: #7c3aed;    /* electric purple */
+  --accent-red: #ff10f0;         /* neon magenta */
+  --accent-blue-dark: #0a0e27;   /* text on bright */
+
+  /* Neon plasma gradient */
+  --plasma-line: linear-gradient(90deg, #ff006e, #b84aff, #7c3aed, #00d9ff, #ff006e);
+  
+  /* Cosmic effects */
+  --glow-purple: rgba(184, 74, 255, 0.5);
+  --glow-pink: rgba(255, 1, 110, 0.4);
+  --glow-cyan: rgba(0, 217, 255, 0.45);
+}
+
+* { font-family: 'Sarabun', sans-serif !important; }
+
+html, body {
+  background: var(--bg-page) !important;
+  color: var(--text-mid);
+}
+
+/* ---------- Space background with stars + nebula ---------- */
+body {
+  position: relative;
+  background: var(--bg-page) !important;
+  overflow-x: hidden;
+}
+
+/* Starfield + Nebula clouds */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -3;
+  pointer-events: none;
+  
+  /* Cosmic nebula clouds with pink and purple */
+  background:
+    radial-gradient(ellipse at 25% 30%, rgba(184, 74, 255, 0.25), transparent 35%),
+    radial-gradient(ellipse at 75% 40%, rgba(255, 1, 110, 0.20), transparent 40%),
+    radial-gradient(ellipse at 50% 75%, rgba(0, 217, 255, 0.18), transparent 45%),
+    radial-gradient(circle at 10% 90%, rgba(184, 74, 255, 0.15), transparent 30%),
+    radial-gradient(circle at 95% 15%, rgba(255, 1, 110, 0.12), transparent 35%),
+    var(--bg-page);
+  
+  background-size: 200% 200%, 200% 200%, 200% 200%, 180% 180%, 180% 180%, 100% 100%;
+  animation: cosmosDrift 25s ease-in-out infinite;
+}
+
+/* Starfield pattern */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  
+  /* Glowing hexagon grid for cyber effect */
+  background-image:
+    radial-gradient(circle, rgba(184, 74, 255, 0.4) 1px, transparent 1px),
+    radial-gradient(circle, rgba(0, 217, 255, 0.3) 1.5px, transparent 1.5px),
+    radial-gradient(circle, rgba(255, 1, 110, 0.25) 1px, transparent 1px);
+  
+  background-size: 80px 80px, 120px 120px, 160px 160px;
+  background-position: 0 0, 40px 40px, 80px 80px;
+  
+  opacity: 0.6;
+  filter: blur(0.5px);
+}
+
+@keyframes cosmosDrift {
+  0%, 100% { 
+    background-position: 0% 0%, 100% 0%, 100% 100%, 0% 100%, 100% 0%, 0 0; 
+  }
+  50% { 
+    background-position: 30% 25%, 70% 30%, 50% 70%, 20% 85%, 85% 20%, 0 0; 
+  }
+}
+
+/* Twinkling stars animation */
+@keyframes twinkleStar {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.8; }
+}
+
+/* ---------- Plasma energy line (replaces holo-line) ---------- */
+.plasma-line {
+  background: var(--plasma-line);
+  background-size: 300% 100%;
+  animation: plasmaFlow 8s linear infinite;
+  box-shadow: 0 0 15px rgba(184, 74, 255, 0.6), 0 0 30px rgba(255, 1, 110, 0.3);
+}
+
+.holo-line {
+  background: var(--plasma-line);
+  background-size: 300% 100%;
+  animation: plasmaFlow 8s linear infinite;
+  box-shadow: 0 0 15px rgba(184, 74, 255, 0.6), 0 0 30px rgba(255, 1, 110, 0.3);
+}
+
+@keyframes plasmaFlow {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 300% 0%; }
+}
+
+/* ---------- Header: Command center style ---------- */
+header,
+header[class*="bg-[#ff4d4d]"] {
+  background: linear-gradient(180deg, rgba(10, 14, 39, 0.94) 0%, rgba(15, 12, 35, 0.97) 100%) !important;
+  border-bottom: none !important;
+  box-shadow: 
+    0 0 30px rgba(184, 74, 255, 0.35),
+    0 0 60px rgba(255, 1, 110, 0.15),
+    0 8px 20px rgba(0, 0, 0, 0.6) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  position: relative;
+}
+
+header::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: -3px;
+  height: 3px;
+  background: var(--plasma-line);
+  background-size: 300% 100%;
+  animation: plasmaFlow 8s linear infinite;
+  box-shadow: 0 0 20px rgba(184, 74, 255, 0.7), 0 0 40px rgba(255, 1, 110, 0.4);
+  opacity: 0.98;
+}
+
+header h1 {
+  color: var(--text-hi) !important;
+  background: linear-gradient(90deg, #ff006e, #b84aff, #00d9ff, #ff006e);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 30px rgba(184, 74, 255, 0.3);
+  font-weight: 800;
+  letter-spacing: 0.15em;
+}
+
+header p { color: var(--text-low) !important; }
+#headerUsername { 
+  color: var(--text-hi) !important;
+  text-shadow: 0 0 15px rgba(0, 217, 255, 0.4);
+}
+#headerUserRole { 
+  color: var(--accent-cyan) !important;
+  text-shadow: 0 0 10px rgba(0, 217, 255, 0.5);
+  font-weight: 600;
+}
+
+header button svg { 
+  color: var(--text-hi) !important;
+  filter: drop-shadow(0 0 8px rgba(184, 74, 255, 0.3));
+}
+
+header button.p-1\.5:hover { 
+  background: rgba(184, 74, 255, 0.15) !important;
+  box-shadow: 0 0 15px rgba(184, 74, 255, 0.3);
+}
+
+/* Header status buttons with neon glow */
+header [onclick="switchPage('reportMiniPage')"],
+header [onclick="triggerExcelRefresh()"],
+header [onclick="logout()"] {
+  box-shadow: 0 0 15px rgba(184, 74, 255, 0.45);
+  border: 1px solid rgba(184, 74, 255, 0.3);
+}
+
+/* ---------- Login screen: Sci-Fi portal style ---------- */
+#loginView { background: transparent; }
+
+#loginView .max-w-md {
+  background: var(--surface-1) !important;
+  border: 2px solid var(--border-soft) !important;
+  box-shadow: 
+    0 0 60px rgba(184, 74, 255, 0.25),
+    0 0 100px rgba(255, 1, 110, 0.1),
+    0 30px 80px rgba(0, 0, 0, 0.65) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  position: relative;
+  overflow: hidden;
+}
+
+#loginView .max-w-md::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(184, 74, 255, 0.1) 1px, transparent 1px);
+  background-size: 50px 50px;
+  animation: cosmosDrift 15s linear infinite;
+  pointer-events: none;
+}
+
+#loginView .bg-\[\#ff4d4d\] {
+  background: linear-gradient(180deg, rgba(10, 14, 39, 0.96) 0%, rgba(15, 12, 35, 0.99) 100%) !important;
+  border-bottom: 3px solid transparent;
+  position: relative;
+}
+
+#loginView .bg-\[\#ff4d4d\]::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: -3px;
+  height: 3px;
+  background: var(--plasma-line);
+  background-size: 300% 100%;
+  animation: plasmaFlow 8s linear infinite;
+  box-shadow: 0 0 20px rgba(184, 74, 255, 0.7);
+}
+
+#loginView .bg-\[\#ff4d4d\] h1 {
+  color: var(--text-hi) !important;
+  background: linear-gradient(90deg, #ff006e, #b84aff, #00d9ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 25px rgba(184, 74, 255, 0.2);
+  letter-spacing: 0.1em;
+  font-weight: 800;
+}
+
+#loginView .bg-\[\#ff4d4d\] p { color: var(--text-mid) !important; }
+#loginView label { color: var(--text-mid) !important; }
+
+#loginView input {
+  background: var(--surface-2) !important;
+  border-color: var(--border-soft) !important;
+  color: var(--text-hi) !important;
+  box-shadow: inset 0 0 20px rgba(184, 74, 255, 0.08);
+  transition: all 0.3s ease;
+}
+
+#loginView input::placeholder { color: var(--text-low) !important; }
+
+#loginView input:focus {
+  box-shadow: 
+    inset 0 0 20px rgba(184, 74, 255, 0.12),
+    0 0 20px rgba(184, 74, 255, 0.3) !important;
+  border-color: var(--accent-purple) !important;
+}
+
+#loginForm button[type="submit"] {
+  background: linear-gradient(90deg, var(--accent-purple), var(--accent-pink)) !important;
+  color: var(--text-hi) !important;
+  box-shadow: 
+    0 0 20px rgba(184, 74, 255, 0.5),
+    0 0 40px rgba(255, 1, 110, 0.3),
+    0 8px 25px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 1, 110, 0.4);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+}
+
+#loginForm button[type="submit"]:hover { 
+  filter: brightness(1.2);
+  box-shadow: 
+    0 0 30px rgba(184, 74, 255, 0.7),
+    0 0 60px rgba(255, 1, 110, 0.4),
+    0 12px 35px rgba(0, 0, 0, 0.5);
+}
+
+/* ---------- Sidebar: Tech control panel ---------- */
+aside#sidebar {
+  background: var(--surface-1) !important;
+  border-right: 2px solid var(--border-soft);
+  box-shadow: 
+    8px 0 30px rgba(184, 74, 255, 0.2),
+    inset -2px 0 0 rgba(184, 74, 255, 0.12);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+aside p.text-gray-400 { 
+  color: var(--text-low) !important; 
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.menu-btn { 
+  color: var(--text-mid) !important; 
+  transition: all .2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.menu-btn::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 3px;
+  height: 100%;
+  background: transparent;
+  transition: all 0.3s ease;
+}
+
+.menu-btn:hover { 
+  background: rgba(184, 74, 255, 0.12) !important; 
+  color: var(--text-hi) !important;
+  box-shadow: inset 0 0 15px rgba(184, 74, 255, 0.1);
+}
+
+.menu-btn.bg-red-50,
+.menu-btn[class*="bg-red-50"] {
+  background: rgba(184, 74, 255, 0.16) !important;
+  color: var(--accent-cyan) !important;
+  border-left: 3px solid var(--accent-purple);
+  box-shadow: inset -3px 0 15px rgba(184, 74, 255, 0.15);
+  text-shadow: 0 0 8px rgba(0, 217, 255, 0.3);
+}
+
+/* ---------- Cards and surfaces ---------- */
+.bg-white, 
+.bg-gray-50,
+[class*="bg-white"],
+[class*="bg-gray-50"] {
+  background: var(--surface-1) !important;
+  border-color: var(--border-soft) !important;
+}
+
+.divide-gray-200 > * + * { border-color: var(--border-softer) !important; }
+
+.text-gray-400 { color: var(--text-low) !important; }
+.text-gray-500 { color: var(--text-low) !important; }
+.text-gray-600 { color: var(--text-mid) !important; }
+.text-gray-700 { color: var(--text-mid) !important; }
+.text-gray-800 { color: var(--text-hi) !important; }
+.text-gray-900 { color: var(--text-hi) !important; }
+
+.shadow-sm, .shadow-md, .shadow-lg, .shadow-xl, .shadow-inner {
+  box-shadow: 
+    0 0 25px rgba(184, 74, 255, 0.15),
+    0 4px 20px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(184, 74, 255, 0.08) !important;
+}
+
+/* ---------- Dashboard stat cards ---------- */
+.rounded-2xl.shadow-sm.p-6 {
+  background: var(--surface-1) !important;
+  border-color: var(--border-soft) !important;
+  box-shadow: 
+    0 0 20px rgba(184, 74, 255, 0.12),
+    0 4px 15px rgba(0, 0, 0, 0.4) !important;
+  border: 1px solid rgba(184, 74, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.rounded-2xl.shadow-sm.p-6::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(184, 74, 255, 0.05) 1px, transparent 2px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+
+/* Card gradient accents */
+.from-blue-50   { --tw-gradient-from: #1a2d5a !important; --tw-gradient-to: rgb(26 45 90 / 0) !important; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important; }
+.from-green-50  { --tw-gradient-from: #1a3a2e !important; --tw-gradient-to: rgb(26 58 46 / 0) !important; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important; }
+.from-red-50    { --tw-gradient-from: #4a1f35 !important; --tw-gradient-to: rgb(74 31 53 / 0) !important; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important; }
+.from-amber-50  { --tw-gradient-from: #3a3215 !important; --tw-gradient-to: rgb(58 50 21 / 0) !important; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important; }
+.from-rose-50   { --tw-gradient-from: #4a1f3a !important; --tw-gradient-to: rgb(74 31 58 / 0) !important; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important; }
+.from-purple-50 { --tw-gradient-from: #3a2a5a !important; --tw-gradient-to: rgb(58 42 90 / 0) !important; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important; }
+.to-white       { --tw-gradient-to: var(--surface-1) !important; }
+
+.bg-blue-50 { background: rgba(184, 74, 255, 0.16) !important; }
+.border-blue-200   { border-color: #6d4a9f !important; }
+.border-green-200  { border-color: #4a7a5a !important; }
+.border-red-200    { border-color: #9f4a6d !important; }
+.border-amber-200  { border-color: #9f7a4a !important; }
+.border-rose-200   { border-color: #9f4a6d !important; }
+.border-purple-200 { border-color: #7a5a9f !important; }
+
+/* Accent colors - Neon themed */
+.bg-blue-500  { background: var(--accent-cyan) !important; }
+.bg-green-500 { background: #00d965 !important; }
+.bg-red-500   { background: var(--accent-pink) !important; }
+.bg-amber-500 { background: #ffaa00 !important; }
+.bg-rose-600  { background: var(--accent-red) !important; }
+.bg-purple-500{ background: var(--accent-purple) !important; }
+
+.text-blue-500  { color: var(--accent-cyan) !important; }
+.text-green-500 { color: #00ff88 !important; }
+.text-red-500   { color: var(--accent-pink) !important; }
+.text-amber-500 { color: #ffaa00 !important; }
+.text-rose-600  { color: var(--accent-red) !important; }
+.text-purple-500{ color: var(--accent-purple) !important; }
+
+.bg-blue-100   { background: rgba(0, 217, 255, 0.12) !important; }
+.bg-green-100  { background: rgba(0, 255, 136, 0.12) !important; }
+.bg-red-100    { background: rgba(255, 1, 110, 0.12) !important; }
+.bg-amber-100  { background: rgba(255, 170, 0, 0.12) !important; }
+.bg-rose-100   { background: rgba(255, 16, 240, 0.12) !important; }
+.bg-purple-100 { background: rgba(184, 74, 255, 0.14) !important; }
+.bg-emerald-100 { background: rgba(0, 255, 136, 0.14) !important; }
+
+.text-blue-700  { color: var(--accent-cyan) !important; }
+.text-green-700 { color: #00ff88 !important; }
+.text-red-700   { color: var(--accent-pink) !important; }
+.text-amber-700 { color: #ffbb44 !important; }
+.text-amber-600 { color: #ffbb44 !important; }
+.text-rose-700  { color: var(--accent-red) !important; }
+.text-purple-700{ color: var(--accent-purple) !important; }
+.text-emerald-700{ color: #00ff88 !important; }
+
+.bg-blue-200, .bg-green-200, .bg-red-200 { filter: brightness(1.2); }
+.hover\:bg-blue-200:hover  { background: rgba(0, 217, 255, 0.20) !important; box-shadow: 0 0 15px rgba(0, 217, 255, 0.2); }
+.hover\:bg-green-200:hover { background: rgba(0, 255, 136, 0.20) !important; box-shadow: 0 0 15px rgba(0, 255, 136, 0.2); }
+.hover\:bg-red-200:hover   { background: rgba(255, 1, 110, 0.20) !important; box-shadow: 0 0 15px rgba(255, 1, 110, 0.2); }
+
+/* ---------- Tables: Sci-Fi data grid ---------- */
+.table-scroll-container {
+  max-height: 62vh;
+  overflow: auto;
+}
+
+.sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--surface-2) !important;
+  box-shadow: 
+    0 2px 15px rgba(184, 74, 255, 0.15),
+    inset 0 1px 0 rgba(184, 74, 255, 0.1);
+}
+
+.sticky-header th { 
+  color: var(--text-hi) !important;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  text-shadow: 0 0 8px rgba(184, 74, 255, 0.2);
+}
+
+table tbody tr:hover { 
+  background: rgba(184, 74, 255, 0.14) !important;
+  box-shadow: inset 0 0 15px rgba(184, 74, 255, 0.08);
+}
+
+table tbody tr:hover td { 
+  color: var(--text-hi) !important;
+}
+
+tbody tr[class*="hover:bg-gray-50"]:hover,
+tbody tr[class*="hover:bg-gray-50"]:hover.transition {
+  background: rgba(184, 74, 255, 0.14) !important;
+}
+
+tbody tr[class*="hover:bg-gray-50"]:hover td {
+  color: var(--text-hi) !important;
+}
+
+tbody tr[class*="bg-blue-50"] {
+  background: rgba(184, 74, 255, 0.18) !important;
+}
+
+tbody tr[class*="bg-blue-50"] td {
+  color: var(--text-hi) !important;
+}
+
+tbody tr[class*="bg-blue-50"]:hover {
+  background: rgba(184, 74, 255, 0.26) !important;
+  box-shadow: inset 0 0 15px rgba(184, 74, 255, 0.12);
+}
+
+#inventoryTableBody, #logTableBody, #reportsTableBody, #usersTableBody, #financeTableBody {
+  background: var(--surface-1) !important;
+}
+
+/* ---------- Inputs and focus states ---------- */
+input, textarea, select {
+  background: var(--surface-2) !important;
+  border-color: var(--border-soft) !important;
+  color: var(--text-hi) !important;
+  box-shadow: inset 0 0 15px rgba(184, 74, 255, 0.06);
+  transition: all 0.3s ease;
+}
+
+input::placeholder, textarea::placeholder { 
+  color: var(--text-low) !important; 
+}
+
+input[readonly] { 
+  background: var(--surface-3) !important; 
+  color: var(--text-low) !important;
+  cursor: not-allowed;
+}
+
+.ring-red-400:focus, .ring-blue-400:focus, .ring-purple-400:focus, .ring-green-400:focus {
+  --tw-ring-color: var(--accent-purple) !important;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  box-shadow: 
+    inset 0 0 15px rgba(184, 74, 255, 0.08),
+    0 0 20px rgba(184, 74, 255, 0.4),
+    0 0 40px rgba(255, 1, 110, 0.15) !important;
+  border-color: var(--accent-purple) !important;
+}
+
+/* ---------- Buttons: Primary action (neon style) ---------- */
+[class*="bg-[#ff4d4d]"] {
+  background: linear-gradient(90deg, var(--accent-purple), var(--accent-pink)) !important;
+  color: var(--text-hi) !important;
+  border: 1px solid rgba(255, 1, 110, 0.4);
+  box-shadow: 
+    0 0 15px rgba(184, 74, 255, 0.4),
+    0 0 30px rgba(255, 1, 110, 0.2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  transition: all 0.3s ease;
+}
+
+[class*="bg-[#ff4d4d]"]:hover:not(header) { 
+  filter: brightness(1.15);
+  box-shadow: 
+    0 0 25px rgba(184, 74, 255, 0.6),
+    0 0 50px rgba(255, 1, 110, 0.3);
+}
+
+header[class*="bg-[#ff4d4d]"]:hover {
+  background: linear-gradient(180deg, rgba(10, 14, 39, 0.94) 0%, rgba(15, 12, 35, 0.97) 100%) !important;
+}
+
+/* Destructive actions - red neon */
+#btnActionDelete {
+  background: linear-gradient(90deg, var(--accent-red), #ff00a8) !important;
+  color: #fff !important;
+  box-shadow: 
+    0 0 15px rgba(255, 16, 240, 0.5),
+    0 0 30px rgba(255, 1, 110, 0.3);
+  border: 1px solid rgba(255, 16, 240, 0.5);
+}
+
+#btnActionDelete:hover { 
+  background: linear-gradient(90deg, #ff00a8, #ff1fb5) !important;
+  box-shadow: 
+    0 0 25px rgba(255, 16, 240, 0.7),
+    0 0 50px rgba(255, 1, 110, 0.4);
+}
+
+/* Secondary button variants */
+[class*="bg-[#2196f3]"] { 
+  background: var(--accent-cyan) !important; 
+  color: var(--accent-blue-dark) !important;
+  box-shadow: 0 0 15px rgba(0, 217, 255, 0.3);
+  border: 1px solid rgba(0, 217, 255, 0.4);
+}
+
+[class*="bg-[#2196f3]"]:hover { 
+  background: #00e7ff !important;
+  box-shadow: 0 0 25px rgba(0, 217, 255, 0.5);
+}
+
+[class*="bg-[#00e676]"] { 
+  background: #00ff88 !important; 
+  color: var(--accent-blue-dark) !important;
+  box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+}
+
+[class*="bg-[#00e676]"]:hover { 
+  background: #00ffaa !important;
+  box-shadow: 0 0 25px rgba(0, 255, 136, 0.5);
+}
+
+[class*="bg-[#d50000]"] { 
+  background: var(--accent-pink) !important;
+  box-shadow: 0 0 15px rgba(255, 1, 110, 0.3);
+}
+
+[class*="bg-[#ffeb3b]"] {
+  background: linear-gradient(90deg, var(--accent-purple), var(--accent-pink)) !important;
+  color: var(--text-hi) !important;
+  box-shadow: 0 0 15px rgba(184, 74, 255, 0.3);
+}
+
+[class*="bg-[#7c3aed]"] { 
+  background: var(--accent-electric) !important; 
+  color: #fff !important;
+  box-shadow: 0 0 15px rgba(124, 58, 237, 0.4);
+}
+
+[class*="bg-[#7c3aed]"]:hover { 
+  background: #9d4edd !important;
+  box-shadow: 0 0 25px rgba(157, 78, 221, 0.5);
+}
+
+/* Neutral / secondary buttons */
+.bg-gray-100.hover\:bg-gray-200,
+button.bg-gray-100 {
+  background: var(--surface-3) !important;
+  color: var(--text-hi) !important;
+  border-color: var(--border-soft) !important;
+  box-shadow: 0 0 10px rgba(184, 74, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.bg-gray-100.hover\:bg-gray-200:hover,
+button.bg-gray-100:hover {
+  background: rgba(184, 74, 255, 0.12) !important;
+  box-shadow: 0 0 15px rgba(184, 74, 255, 0.2);
+}
+
+.bg-gray-200.hover\:bg-gray-300 {
+  background: var(--surface-3) !important;
+  color: var(--text-hi) !important;
+  box-shadow: 0 0 10px rgba(184, 74, 255, 0.1);
+}
+
+/* ---------- Modals: Sci-Fi portal windows ---------- */
+.fixed.inset-0.bg-black\/60 { 
+  background: rgba(2, 5, 14, 0.82) !important; 
+  backdrop-filter: blur(6px);
+  animation: fadeInModal 0.3s ease;
+}
+
+@keyframes fadeInModal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+#editModal .max-w-lg, #userModal .max-w-lg, #financeModal .max-w-lg {
+  background: var(--surface-1) !important;
+  border: 2px solid var(--border-soft) !important;
+  box-shadow: 
+    0 0 80px rgba(184, 74, 255, 0.25),
+    0 0 120px rgba(255, 1, 110, 0.12),
+    0 30px 80px rgba(0, 0, 0, 0.7) !important;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  position: relative;
+  overflow: hidden;
+  animation: slideInModal 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes slideInModal {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ---------- Scrollbars: Neon tracks ---------- */
+::-webkit-scrollbar { 
+  width: 12px; 
+  height: 12px; 
+}
+
+::-webkit-scrollbar-track { 
+  background: var(--bg-page-2);
+}
+
+::-webkit-scrollbar-thumb { 
+  background: linear-gradient(180deg, var(--accent-purple), var(--accent-pink));
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(184, 74, 255, 0.4);
+}
+
+::-webkit-scrollbar-thumb:hover { 
+  background: linear-gradient(180deg, var(--accent-pink), var(--accent-purple));
+  box-shadow: 0 0 20px rgba(184, 74, 255, 0.6);
+}
+
+/* ---------- Animations and utilities ---------- */
+.animate-pulse { 
+  animation: neonPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; 
+}
+
+@keyframes neonPulse {
+  0%, 100% { 
+    opacity: 0.8;
+    text-shadow: 0 0 10px rgba(184, 74, 255, 0.3);
+  }
+  50% { 
+    opacity: 1;
+    text-shadow: 0 0 20px rgba(184, 74, 255, 0.6);
+  }
+}
+
+/* Glow effect utility */
+.glow-neon {
+  text-shadow: 
+    0 0 10px rgba(184, 74, 255, 0.5),
+    0 0 20px rgba(255, 1, 110, 0.3);
+}
+
+/* Cosmic shimmer effect */
+@keyframes cosmicShimmer {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.cosmic-shimmer {
+  animation: cosmicShimmer 3s ease-in-out infinite;
+}
+
+/* ========== Camera Page Styles (COSMOS Neon Theme) ========== */
+#cameraPreview {
+  background: var(--bg-page-2) !important;
+  border: 2px solid var(--border-soft) !important;
+}
+
+#videoStream {
+  background: var(--bg-page) !important;
+}
+
+#capturedPhotoContainer {
+  background: var(--surface-2) !important;
+  border-color: var(--border-soft) !important;
+}
+
+#productListContainer {
+  background: var(--surface-2) !important;
+  border-color: var(--border-soft) !important;
+}
+
+#productListContainer button {
+  color: var(--text-mid) !important;
+  border-color: var(--border-softer) !important;
+}
+
+#productListContainer button:hover {
+  background: rgba(184, 74, 255, 0.15) !important;
+  color: var(--accent-purple) !important;
+  box-shadow: 0 0 10px rgba(184, 74, 255, 0.3) !important;
+}
+
+#cameraSelect {
+  background: var(--surface-2) !important;
+  border-color: var(--border-soft) !important;
+  color: var(--text-hi) !important;
+}
+
+#cameraSelect option {
+  background: var(--bg-page);
+  color: var(--text-hi);
+}
+
+#productSearch {
+  background: var(--surface-2) !important;
+  border-color: var(--border-soft) !important;
+  color: var(--text-hi) !important;
+}
+
+#productSearch::placeholder {
+  color: var(--text-low) !important;
+}
+
+/* Camera Page Info Cards */
+#cameraPage .bg-white {
+  background: var(--surface-1) !important;
+  border-color: var(--border-soft) !important;
+}
+
+#cameraPage label {
+  color: var(--text-mid) !important;
+}
+
+#cameraPage h3 {
+  color: var(--text-hi) !important;
+}
+
+#cameraPage p {
+  color: var(--text-mid) !important;
+}
+
+#selectedProductId,
+#selectedProductName,
+#selectedProductType,
+#selectedProductStatus {
+  color: var(--text-hi) !important;
+}
+
+/* Button Styles for Camera */
+#btnStartCamera {
+  background: #16c784 !important;
+  color: #fff !important;
+  box-shadow: 0 0 10px rgba(22, 199, 132, 0.3) !important;
+}
+
+#btnStartCamera:hover:not(:disabled) {
+  background: #21e298 !important;
+  box-shadow: 0 0 20px rgba(22, 199, 132, 0.5) !important;
+}
+
+#btnStartCamera:disabled {
+  background: var(--text-low) !important;
+  opacity: 0.5 !important;
+}
+
+#btnStopCamera {
+  background: #ff10f0 !important;
+  color: #fff !important;
+  box-shadow: 0 0 10px rgba(255, 16, 240, 0.3) !important;
+}
+
+#btnStopCamera:hover:not(:disabled) {
+  background: #e00dd8 !important;
+  box-shadow: 0 0 20px rgba(255, 16, 240, 0.5) !important;
+}
+
+#btnStopCamera:disabled {
+  background: var(--text-low) !important;
+  opacity: 0.5 !important;
+}
+
+#btnCapturePhoto {
+  background: #00d9ff !important;
+  color: #000 !important;
+  box-shadow: 0 0 10px rgba(0, 217, 255, 0.3) !important;
+}
+
+#btnCapturePhoto:hover:not(:disabled) {
+  background: #00f0ff !important;
+  box-shadow: 0 0 20px rgba(0, 217, 255, 0.5) !important;
+}
+
+#btnCapturePhoto:disabled {
+  background: var(--text-low) !important;
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+#btnClearPhoto {
+  background: var(--text-low) !important;
+  color: #fff !important;
+}
+
+#btnClearPhoto:hover:not(:disabled) {
+  background: var(--text-mid) !important;
+}
+
+#btnClearPhoto:disabled {
+  background: var(--border-soft) !important;
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+#btnSavePhoto {
+  background: var(--accent-purple) !important;
+  color: #fff !important;
+  box-shadow: 0 0 15px rgba(184, 74, 255, 0.4) !important;
+}
+
+#btnSavePhoto:hover:not(:disabled) {
+  background: #c95aff !important;
+  box-shadow: 0 0 25px rgba(184, 74, 255, 0.6) !important;
+}
+
+#btnSavePhoto:disabled {
+  background: var(--text-low) !important;
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+/* Camera No Camera Message */
+#noCameraMsg {
+  background: var(--bg-page-2) !important;
+  color: var(--text-mid) !important;
+}
+
+#noCameraMsg p {
+  color: var(--text-hi) !important;
+}
+
+#noCameraMsg .text-gray-300 {
+  color: var(--text-low) !important;
+}

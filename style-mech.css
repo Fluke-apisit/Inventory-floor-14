@@ -1,0 +1,515 @@
+/* =========================================================================
+   ระบบ Inventory ชั้น 14 — "MECH COMBAT" War Robots HUD Theme
+   อ้างอิงจากภาพ: พื้นหลังมืด sci-fi, border/accent สีเหลืองทอง-ส้ม,
+   ตัวหนังสือสีเหลืองสด, panel ขอบเหลี่ยม HUD, glow สีน้ำเงิน/เขียว
+   ========================================================================= */
+
+:root {
+  --bg-page:    #0b0d14;
+  --bg-page-2:  #0e1018;
+  --surface-1:  #11141f;
+  --surface-2:  #161a28;
+  --surface-3:  #1c2133;
+  --border-soft:   rgba(255, 180, 0, 0.30);
+  --border-softer: rgba(255, 130, 0, 0.15);
+
+  --text-hi:  #ffe566;
+  --text-mid: #c8c0a0;
+  --text-low: #6a6450;
+
+  --accent-gold:    #ffb400;
+  --accent-orange:  #ff6a00;
+  --accent-cyan:    #00d4ff;
+  --accent-green:   #00ff88;
+  --accent-red:     #ff3030;
+  --accent-dark:    #0b0d14;
+
+  --glow-gold:  rgba(255, 180, 0, 0.55);
+  --glow-cyan:  rgba(0, 212, 255, 0.50);
+  --glow-green: rgba(0, 255, 136, 0.45);
+
+  --hud-line: linear-gradient(90deg, var(--accent-gold), var(--accent-orange), #ffee00, var(--accent-gold));
+  --hud-border: 2px solid rgba(255, 180, 0, 0.45);
+}
+
+* { font-family: 'Sarabun', sans-serif !important; }
+
+html, body {
+  background: var(--bg-page) !important;
+  color: var(--text-mid);
+}
+
+/* Dark space background with subtle grid and glow spots */
+body {
+  background:
+    radial-gradient(ellipse at 20% 10%, rgba(0, 100, 180, 0.18) 0%, transparent 40%),
+    radial-gradient(ellipse at 80% 80%, rgba(0, 180, 80, 0.12) 0%, transparent 40%),
+    radial-gradient(ellipse at 50% 50%, rgba(255, 140, 0, 0.06) 0%, transparent 55%),
+    var(--bg-page) !important;
+  background-attachment: fixed;
+}
+
+/* HUD grid overlay */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 180, 0, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 180, 0, 0.035) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* Corner bracket accent */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(rgba(0, 212, 255, 0.06) 0%, transparent 8%),
+    linear-gradient(180deg, transparent 92%, rgba(0, 212, 255, 0.06) 100%);
+}
+
+/* ---------- HUD scan-line animation ---------- */
+@keyframes hudScan {
+  0%   { background-position: 0 -100vh; }
+  100% { background-position: 0 100vh; }
+}
+@keyframes goldPulse {
+  0%, 100% { box-shadow: 0 0 8px var(--glow-gold); }
+  50%       { box-shadow: 0 0 22px var(--glow-gold), 0 0 40px rgba(255,180,0,0.2); }
+}
+@keyframes hudFlow {
+  0%   { background-position: 0% 0%; }
+  100% { background-position: 300% 0%; }
+}
+
+/* ---------- Header: Combat bridge ---------- */
+header,
+header[class*="bg-[#ff4d4d]"] {
+  background: linear-gradient(180deg, #0d1020 0%, #0b0d14 100%) !important;
+  border-bottom: none !important;
+  box-shadow: 0 0 0 2px var(--accent-gold), 0 6px 24px rgba(0,0,0,0.7) !important;
+  position: relative;
+}
+header::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: -4px;
+  height: 4px;
+  background: var(--hud-line);
+  background-size: 300% 100%;
+  animation: hudFlow 6s linear infinite;
+  box-shadow: 0 0 14px var(--glow-gold), 0 0 30px rgba(255,100,0,0.3);
+}
+header h1 {
+  color: var(--text-hi) !important;
+  background: linear-gradient(90deg, #ffee00, var(--accent-gold), var(--accent-orange), #ffee00);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+header p { color: var(--text-low) !important; }
+#headerUsername { color: var(--accent-gold) !important; font-weight: 700; }
+#headerUserRole { color: var(--accent-cyan) !important; text-transform: uppercase; font-size: 0.7rem; }
+header button svg { color: var(--text-mid) !important; }
+header button.p-1\.5:hover { background: rgba(255,180,0,0.1) !important; }
+header [onclick="switchPage('reportMiniPage')"],
+header [onclick="triggerExcelRefresh()"],
+header [onclick="logout()"] {
+  box-shadow: 0 0 10px rgba(255,180,0,0.3);
+}
+
+/* ---------- Login screen: Combat terminal ---------- */
+#loginView { background: transparent; }
+#loginView .max-w-md {
+  background: var(--surface-1) !important;
+  border: 2px solid var(--accent-gold) !important;
+  box-shadow:
+    0 0 0 1px rgba(255,100,0,0.2),
+    0 0 40px rgba(255,180,0,0.2),
+    0 0 80px rgba(0,0,0,0.7) !important;
+  clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px));
+  position: relative;
+}
+#loginView .bg-\[\#ff4d4d\] {
+  background: linear-gradient(135deg, #141820 0%, #0d1018 100%) !important;
+  border-bottom: 3px solid var(--accent-gold);
+  position: relative;
+}
+#loginView .bg-\[\#ff4d4d\] h1 {
+  color: var(--accent-gold) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-weight: 900;
+  text-shadow: 0 0 20px var(--glow-gold);
+}
+#loginView .bg-\[\#ff4d4d\] p { color: var(--text-mid) !important; }
+#loginView label { color: var(--text-mid) !important; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.08em; }
+#loginView input {
+  background: var(--surface-2) !important;
+  border-color: rgba(255,180,0,0.35) !important;
+  color: var(--accent-gold) !important;
+  font-family: 'Sarabun', monospace !important;
+}
+#loginView input::placeholder { color: var(--text-low) !important; }
+#loginView input:focus {
+  box-shadow: 0 0 0 2px rgba(255,180,0,0.4), 0 0 20px rgba(255,180,0,0.2) !important;
+  border-color: var(--accent-gold) !important;
+}
+#loginForm button[type="submit"] {
+  background: linear-gradient(90deg, var(--accent-gold), var(--accent-orange), var(--accent-gold)) !important;
+  background-size: 200% 100% !important;
+  color: #0b0d14 !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.15em !important;
+  text-transform: uppercase !important;
+  box-shadow: 0 0 20px var(--glow-gold), 0 6px 16px rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,200,0,0.6);
+  transition: all 0.3s ease;
+  clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+}
+#loginForm button[type="submit"]:hover {
+  filter: brightness(1.15);
+  box-shadow: 0 0 35px var(--glow-gold), 0 0 60px rgba(255,100,0,0.3);
+}
+
+/* ---------- Sidebar: Tactical panel ---------- */
+aside#sidebar {
+  background: var(--surface-1) !important;
+  border-right: var(--hud-border);
+  box-shadow: 4px 0 20px rgba(255,180,0,0.12), inset -1px 0 0 rgba(255,180,0,0.1);
+}
+aside p.text-gray-400 {
+  color: var(--accent-gold) !important;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+.menu-btn {
+  color: var(--text-mid) !important;
+  transition: all .18s ease;
+  position: relative;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+}
+.menu-btn:hover {
+  background: rgba(255,180,0,0.10) !important;
+  color: var(--accent-gold) !important;
+  box-shadow: inset 0 0 12px rgba(255,180,0,0.08);
+}
+.menu-btn.bg-red-50,
+.menu-btn[class*="bg-red-50"] {
+  background: rgba(255,180,0,0.14) !important;
+  color: var(--accent-gold) !important;
+  border-left: 3px solid var(--accent-gold);
+  box-shadow: inset 0 0 12px rgba(255,180,0,0.12), 0 0 8px rgba(255,180,0,0.1);
+}
+
+/* ---------- Generic surfaces ---------- */
+main { background: transparent !important; }
+.bg-white  { background: var(--surface-1) !important; }
+.bg-gray-50 { background: var(--surface-2) !important; }
+.bg-gray-100 { background: var(--surface-2) !important; }
+.bg-gray-200 { background: var(--surface-3) !important; }
+.bg-gray-300 { background: var(--border-soft) !important; }
+
+.border-gray-100, .border-gray-200, .border-gray-300 {
+  border-color: rgba(255,180,0,0.2) !important;
+}
+.divide-gray-200 > * + * { border-color: rgba(255,180,0,0.1) !important; }
+
+.text-gray-400 { color: var(--text-low) !important; }
+.text-gray-500 { color: var(--text-low) !important; }
+.text-gray-600 { color: var(--text-mid) !important; }
+.text-gray-700 { color: var(--text-mid) !important; }
+.text-gray-800 { color: var(--text-hi) !important; }
+.text-gray-900 { color: var(--text-hi) !important; }
+
+.shadow-sm, .shadow-md, .shadow-lg, .shadow-xl, .shadow-inner {
+  box-shadow: 0 0 20px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,180,0,0.1) !important;
+}
+
+/* ---------- Dashboard stat cards: HUD panels ---------- */
+.rounded-2xl.shadow-sm.p-6 {
+  background: var(--surface-1) !important;
+  border: 1px solid rgba(255,180,0,0.25) !important;
+  box-shadow: 0 0 16px rgba(255,180,0,0.08), 0 4px 20px rgba(0,0,0,0.5) !important;
+  position: relative;
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+}
+/* HUD corner bracket decoration */
+.rounded-2xl.shadow-sm.p-6::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0;
+  width: 16px; height: 16px;
+  border-top: 2px solid var(--accent-gold);
+  border-left: 2px solid var(--accent-gold);
+  pointer-events: none;
+}
+.rounded-2xl.shadow-sm.p-6::after {
+  content: "";
+  position: absolute;
+  bottom: 0; right: 0;
+  width: 16px; height: 16px;
+  border-bottom: 2px solid var(--accent-gold);
+  border-right: 2px solid var(--accent-gold);
+  pointer-events: none;
+}
+
+/* Card gradient backgrounds */
+.from-blue-50   { --tw-gradient-from: #0e1e35 !important; --tw-gradient-to: transparent !important; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important; }
+.from-green-50  { --tw-gradient-from: #0d2318 !important; --tw-gradient-to: transparent !important; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important; }
+.from-red-50    { --tw-gradient-from: #2a1010 !important; --tw-gradient-to: transparent !important; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important; }
+.from-amber-50  { --tw-gradient-from: #2a1e08 !important; --tw-gradient-to: transparent !important; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important; }
+.from-rose-50   { --tw-gradient-from: #2a1015 !important; --tw-gradient-to: transparent !important; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important; }
+.from-purple-50 { --tw-gradient-from: #1a1030 !important; --tw-gradient-to: transparent !important; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important; }
+.to-white       { --tw-gradient-to: var(--surface-1) !important; }
+
+/* Accent color overrides */
+.bg-blue-500   { background: var(--accent-cyan) !important; }
+.bg-green-500  { background: var(--accent-green) !important; }
+.bg-red-500    { background: var(--accent-red) !important; }
+.bg-amber-500  { background: var(--accent-gold) !important; }
+.bg-rose-600   { background: #ff2050 !important; }
+.bg-purple-500 { background: #a855f7 !important; }
+
+.text-blue-500   { color: var(--accent-cyan) !important; }
+.text-green-500  { color: var(--accent-green) !important; }
+.text-red-500    { color: var(--accent-red) !important; }
+.text-amber-500  { color: var(--accent-gold) !important; }
+.text-rose-600   { color: #ff2050 !important; }
+.text-purple-500 { color: #c084fc !important; }
+
+.bg-blue-100   { background: rgba(0,212,255,0.12) !important; }
+.bg-green-100  { background: rgba(0,255,136,0.12) !important; }
+.bg-red-100    { background: rgba(255,48,48,0.12) !important; }
+.bg-amber-100  { background: rgba(255,180,0,0.14) !important; }
+.bg-rose-100   { background: rgba(255,32,80,0.12) !important; }
+.bg-purple-100 { background: rgba(168,85,247,0.12) !important; }
+.bg-emerald-100 { background: rgba(0,255,136,0.12) !important; }
+.bg-blue-50    { background: rgba(0,212,255,0.10) !important; }
+
+.text-blue-700  { color: var(--accent-cyan) !important; }
+.text-green-700 { color: var(--accent-green) !important; }
+.text-red-700   { color: #ff7070 !important; }
+.text-amber-700 { color: var(--accent-gold) !important; }
+.text-amber-600 { color: var(--accent-gold) !important; }
+.text-rose-700  { color: #ff6080 !important; }
+.text-purple-700{ color: #d0a3ff !important; }
+.text-emerald-700{ color: var(--accent-green) !important; }
+
+.border-blue-200   { border-color: rgba(0,212,255,0.3) !important; }
+.border-green-200  { border-color: rgba(0,255,136,0.25) !important; }
+.border-red-200    { border-color: rgba(255,48,48,0.25) !important; }
+.border-amber-200  { border-color: rgba(255,180,0,0.35) !important; }
+.border-rose-200   { border-color: rgba(255,32,80,0.25) !important; }
+.border-purple-200 { border-color: rgba(168,85,247,0.25) !important; }
+
+/* ---------- Tables: Tactical data grid ---------- */
+.table-scroll-container {
+  max-height: 62vh;
+  overflow: auto;
+}
+.sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: #0d1020 !important;
+  border-bottom: 2px solid var(--accent-gold);
+}
+.sticky-header th {
+  color: var(--accent-gold) !important;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+}
+table tbody tr:hover {
+  background: rgba(255,180,0,0.10) !important;
+}
+table tbody tr:hover td { color: var(--text-hi) !important; }
+tbody tr[class*="hover:bg-gray-50"]:hover { background: rgba(255,180,0,0.10) !important; }
+tbody tr[class*="hover:bg-gray-50"]:hover td { color: var(--text-hi) !important; }
+tbody tr[class*="bg-blue-50"] { background: rgba(0,212,255,0.12) !important; }
+tbody tr[class*="bg-blue-50"] td { color: var(--text-hi) !important; }
+tbody tr[class*="bg-blue-50"]:hover { background: rgba(0,212,255,0.2) !important; }
+#inventoryTableBody, #logTableBody, #reportsTableBody, #usersTableBody, #financeTableBody {
+  background: var(--surface-1) !important;
+}
+
+/* ---------- Inputs ---------- */
+input, textarea, select {
+  background: var(--surface-2) !important;
+  border-color: rgba(255,180,0,0.3) !important;
+  color: var(--text-hi) !important;
+}
+input::placeholder, textarea::placeholder { color: var(--text-low) !important; }
+input[readonly] { background: var(--surface-3) !important; color: var(--text-low) !important; }
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(255,180,0,0.35), 0 0 16px rgba(255,180,0,0.18) !important;
+  border-color: var(--accent-gold) !important;
+}
+
+/* ---------- Buttons ---------- */
+[class*="bg-[#ff4d4d]"] {
+  background: linear-gradient(90deg, var(--accent-gold), var(--accent-orange), var(--accent-gold)) !important;
+  background-size: 200% 100% !important;
+  color: #0b0d14 !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.1em !important;
+  box-shadow: 0 0 14px var(--glow-gold), 0 4px 12px rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,200,0,0.5) !important;
+  transition: all 0.25s ease;
+}
+[class*="bg-[#ff4d4d]"]:hover:not(header) {
+  filter: brightness(1.12);
+  box-shadow: 0 0 28px var(--glow-gold), 0 0 50px rgba(255,100,0,0.25);
+}
+header[class*="bg-[#ff4d4d]"]:hover {
+  background: linear-gradient(180deg, #0d1020 0%, #0b0d14 100%) !important;
+}
+
+#btnActionDelete {
+  background: var(--accent-red) !important;
+  color: #fff !important;
+  box-shadow: 0 0 14px rgba(255,48,48,0.4);
+}
+#btnActionDelete:hover { filter: brightness(1.15) !important; }
+
+[class*="bg-[#2196f3]"] {
+  background: var(--accent-cyan) !important;
+  color: #0b0d14 !important;
+  box-shadow: 0 0 12px var(--glow-cyan);
+}
+[class*="bg-[#2196f3]"]:hover { filter: brightness(1.1) !important; }
+
+[class*="bg-[#00e676]"] {
+  background: var(--accent-green) !important;
+  color: #0b0d14 !important;
+  box-shadow: 0 0 12px var(--glow-green);
+}
+[class*="bg-[#00e676]"]:hover { filter: brightness(1.1) !important; }
+
+[class*="bg-[#d50000]"] { background: var(--accent-red) !important; }
+[class*="bg-[#ffeb3b]"] {
+  background: linear-gradient(90deg, var(--accent-gold), var(--accent-orange)) !important;
+  color: #0b0d14 !important;
+}
+[class*="bg-[#7c3aed]"] { background: #8b5cf6 !important; color: #fff !important; }
+[class*="bg-[#7c3aed]"]:hover { background: #9d70f7 !important; }
+
+.bg-gray-100.hover\:bg-gray-200,
+button.bg-gray-100 {
+  background: var(--surface-3) !important;
+  color: var(--text-hi) !important;
+  border-color: rgba(255,180,0,0.2) !important;
+}
+.bg-gray-200.hover\:bg-gray-300 {
+  background: var(--surface-3) !important;
+  color: var(--text-hi) !important;
+}
+
+/* ---------- Modals: HUD popup panels ---------- */
+.fixed.inset-0.bg-black\/60 {
+  background: rgba(4, 6, 12, 0.82) !important;
+  backdrop-filter: blur(4px);
+}
+#editModal .max-w-lg, #userModal .max-w-lg, #financeModal .max-w-lg {
+  background: var(--surface-1) !important;
+  border: 2px solid var(--accent-gold) !important;
+  box-shadow:
+    0 0 0 1px rgba(255,100,0,0.15),
+    0 0 50px rgba(255,180,0,0.18),
+    0 30px 80px rgba(0,0,0,0.7) !important;
+  clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px));
+}
+
+/* ---------- Scrollbars ---------- */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: #0b0d14; }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--accent-gold), var(--accent-orange));
+  border-radius: 4px;
+  box-shadow: 0 0 8px rgba(255,180,0,0.35);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #ffee00, var(--accent-gold));
+  box-shadow: 0 0 16px var(--glow-gold);
+}
+
+/* ---------- Misc ---------- */
+.animate-pulse {
+  animation: goldPulse 1.8s cubic-bezier(0.4,0,0.6,1) infinite;
+}
+
+/* ========== Camera Page Styles (Mech Neon Theme) ========== */
+#cameraPreview {
+  background: var(--bg-page-2) !important;
+  border: 2px solid var(--border-soft) !important;
+}
+
+#videoStream {
+  background: var(--bg-page) !important;
+}
+
+#capturedPhotoContainer {
+  background: var(--surface-2) !important;
+  border-color: var(--border-soft) !important;
+}
+
+#productListContainer {
+  background: var(--surface-2) !important;
+  border-color: var(--border-soft) !important;
+}
+
+#productListContainer button:hover {
+  background: rgba(255, 0, 150, 0.15) !important;
+  color: var(--accent-pink) !important;
+  box-shadow: 0 0 10px rgba(255, 0, 150, 0.3) !important;
+}
+
+#cameraSelect,
+#productSearch {
+  background: var(--surface-2) !important;
+  border-color: var(--border-soft) !important;
+  color: var(--text-hi) !important;
+}
+
+#btnStartCamera {
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.4) !important;
+}
+
+#btnStartCamera:hover:not(:disabled) {
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.6) !important;
+}
+
+#btnCapturePhoto {
+  background: var(--accent-pink) !important;
+  box-shadow: 0 0 10px rgba(255, 0, 150, 0.4) !important;
+}
+
+#btnCapturePhoto:hover:not(:disabled) {
+  box-shadow: 0 0 20px rgba(255, 0, 150, 0.6) !important;
+}
+
+#btnSavePhoto {
+  background: var(--accent-cyan) !important;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.4) !important;
+}
+
+#btnSavePhoto:hover:not(:disabled) {
+  box-shadow: 0 0 25px rgba(0, 255, 255, 0.6) !important;
+}

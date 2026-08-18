@@ -1,0 +1,25 @@
+// 1. กำหนดรายชื่อพนักงานและรหัสผ่านที่ยอมรับให้เข้าสู่ระบบได้
+        const allowedUsers = {
+            "6900988": "1234",       // พนักงานคนที่ 1 (รหัสพนักงาน : รหัสผ่าน)
+            "6900111": "password123", // พนักงานคนที่ 2
+            "6900222": "unique99",    // พนักงานคนที่ 3
+            "admin": "admin555"       // พนักงานคนที่ 4 (สามารถเพิ่มต่อไปได้เรื่อย ๆ)
+        };
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const empId = document.getElementById('empId').value.trim();
+            const password = document.getElementById('password').value;
+
+            // 2. ตรวจสอบว่ามีรหัสพนักงานนี้ในระบบไหม และรหัสผ่านตรงกันหรือไม่
+            if (allowedUsers[empId] && allowedUsers[empId] === password) {
+                sessionStorage.setItem('isLoggedIn', 'true');
+                
+                // (ตัวเลือกเสริม) บันทึกชื่อหรือรหัสผู้ที่ล็อกอินเข้ามา เพื่อเอาไปใช้แสดงผล
+                sessionStorage.setItem('currentEmpId', empId); 
+                
+                checkAuth();
+            } else {
+                alert('❌ รหัสพนักงานหรือรหัสผ่านไม่ถูกต้อง');
+            }
+        }
