@@ -1733,21 +1733,40 @@
             db = firestoreApi.getFirestore(app);
         }
 
+        // ตัวช่วยกันไม่ให้รอ Promise ค้างนานเกินไป (เช่น เน็ตหลุด/ตั้งค่า Firebase ผิด) — ถ้าเกินเวลาที่กำหนดจะถือว่าล้มเหลวแล้วไปต่อทันที
+        function withTimeout(promise, ms, label) {
+            return Promise.race([
+                promise,
+                new Promise((_, reject) => setTimeout(() => reject(new Error(`หมดเวลาเชื่อมต่อ: ${label}`)), ms))
+            ]);
+        }
+
         // ดึงรายชื่อผู้ใช้งานจาก Firestore มาไว้ในตัวแปร allowedUsers แล้วเปิดฟังการเปลี่ยนแปลงแบบเรียลไทม์
         // เพื่อให้ทุกอุปกรณ์ที่เปิดระบบนี้เห็นรายชื่อผู้ใช้งาน/สิทธิ์ล่าสุดตรงกันเสมอ
         async function loadUsersFromCloud() {
             const statusEl = document.getElementById('loginSyncStatus');
+
+            // ถ้ายังไม่ได้แก้ firebaseConfig ให้เป็นค่าจริง (ยังเป็นค่า placeholder อยู่) ข้ามไปใช้ข้อมูลในเครื่องเลย ไม่ต้องเสียเวลารอ
+            if (!firebaseConfig.apiKey || firebaseConfig.apiKey === 'YOUR_API_KEY') {
+                cloudReady = false;
+                if (statusEl) {
+                    statusEl.textContent = 'ยังไม่ได้ตั้งค่า Firebase (ใช้ข้อมูลในเครื่องนี้ไปก่อน)';
+                    statusEl.className = 'text-xs text-center text-amber-600';
+                }
+                return;
+            }
+
             try {
-                await initFirebase();
+                await withTimeout(initFirebase(), 10000, 'โหลด Firebase SDK');
                 const usersCol = firestoreApi.collection(db, 'users');
-                const snapshot = await firestoreApi.getDocs(usersCol);
+                const snapshot = await withTimeout(firestoreApi.getDocs(usersCol), 10000, 'ดึงรายชื่อผู้ใช้งาน');
 
                 if (snapshot.empty) {
                     // ครั้งแรกที่เชื่อมต่อ ยังไม่มีข้อมูลผู้ใช้งานบน Cloud เลย -> อัปโหลดชุดผู้ใช้งานเริ่มต้นขึ้นไปให้อัตโนมัติ
                     const writePromises = Object.keys(allowedUsers).map(empId =>
                         firestoreApi.setDoc(firestoreApi.doc(db, 'users', empId), allowedUsers[empId])
                     );
-                    await Promise.all(writePromises);
+                    await withTimeout(Promise.all(writePromises), 10000, 'สร้างผู้ใช้งานเริ่มต้นบน Cloud');
                 } else {
                     const cloudUsers = {};
                     snapshot.forEach(docSnap => { cloudUsers[docSnap.id] = docSnap.data(); });
