@@ -1707,8 +1707,15 @@
         }
 
         // ===== ระบบซิงก์รูปสินค้าผ่าน Firestore โดยตรง (ไม่ใช้ Firebase Storage เพราะต้องผูกบัตรเครดิต/แผน Blaze) =====
-        // แต่ละรูปเก็บเป็นเอกสารแยกใน collection "productPhotos" (doc ID = รหัสสินค้า) เพื่อไม่ให้เอกสารรวมข้อมูลสต๊อกบวมเกิน 1MB
+        // แต่ละรูปเก็บเป็นเอกสารแยกใน collection "productPhotos" เพื่อไม่ให้เอกสารรวมข้อมูลสต๊อกบวมเกิน 1MB
         // ก่อนอัปโหลดจะบีบอัด/ย่อขนาดรูปให้เล็กพอเสมอ (ขีดจำกัดเอกสารของ Firestore คือ 1MB ต่อเอกสาร)
+        // หมายเหตุ: รหัสสินค้าบางตัวมีเครื่องหมาย "/" ซึ่ง Firestore ใช้เป็นตัวแบ่ง path ของเอกสาร
+        // ใช้ตรงๆ เป็นชื่อเอกสารไม่ได้ จึงต้องแปลงให้ปลอดภัยก่อน แล้วเก็บรหัสจริงไว้เป็น field แทนเพื่อใช้ค้นหากลับ
+
+        // แปลงรหัสสินค้าให้ใช้เป็นชื่อเอกสารบน Firestore ได้อย่างปลอดภัย (แทนที่ "/" ด้วย "_")
+        function sanitizeIdForFirestore(id) {
+            return String(id).replace(/\//g, '_');
+        }
 
         // ย่อขนาด + บีบอัดคุณภาพรูปด้วย canvas ให้ได้ไฟล์เล็กลงตามที่กำหนด
         function compressImageDataUrl(dataUrl, maxDim, quality) {
@@ -1756,8 +1763,9 @@
             if (!cloudReady || !db) return null;
             try {
                 const compressed = await compressImageForCloud(dataUrl);
+                const docId = sanitizeIdForFirestore(productId);
                 await withTimeout(
-                    firestoreApi.setDoc(firestoreApi.doc(db, 'productPhotos', productId), { photo: compressed, updatedAt: Date.now() }),
+                    firestoreApi.setDoc(firestoreApi.doc(db, 'productPhotos', docId), { productId, photo: compressed, updatedAt: Date.now() }),
                     20000,
                     'อัปโหลดรูปสินค้า'
                 );
@@ -1790,17 +1798,23 @@
             try {
                 const photosCol = firestoreApi.collection(db, 'productPhotos');
                 const snapshot = await withTimeout(firestoreApi.getDocs(photosCol), 20000, 'โหลดรูปสินค้าจากฐานข้อมูลกลาง');
-                snapshot.forEach(docSnap => { cloudPhotoMap[docSnap.id] = docSnap.data().photo; });
+                snapshot.forEach(docSnap => {
+                    const data = docSnap.data();
+                    const realId = data.productId || docSnap.id;
+                    cloudPhotoMap[realId] = data.photo;
+                });
                 applyCloudPhotosToCurrentData();
 
                 firestoreApi.onSnapshot(photosCol, (snap) => {
                     snap.docChanges().forEach(change => {
+                        const data = change.doc.data();
+                        const realId = (data && data.productId) || change.doc.id;
                         if (change.type === 'removed') {
-                            delete cloudPhotoMap[change.doc.id];
+                            delete cloudPhotoMap[realId];
                         } else {
-                            cloudPhotoMap[change.doc.id] = change.doc.data().photo;
-                            const item = currentLoadedData.find(p => p.id === change.doc.id);
-                            if (item) item.photo = change.doc.data().photo;
+                            cloudPhotoMap[realId] = data.photo;
+                            const item = currentLoadedData.find(p => p.id === realId);
+                            if (item) item.photo = data.photo;
                         }
                     });
                     const p = document.getElementById('checkPage');
