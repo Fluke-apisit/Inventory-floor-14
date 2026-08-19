@@ -11,7 +11,7 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" id="themeLink" href="style.css">
+    <link rel="stylesheet" id="themeLink" href="style-warehouse.css">
     <style>
         /* ===== Onboarding Tour ===== */
         .onboarding-overlay {
@@ -323,26 +323,6 @@
         }
         .settings-switch input:checked + .settings-switch-track::before {
             transform: translateX(20px);
-        }
-
-        /* ===== Settings theme buttons ===== */
-        .settings-theme-btn {
-            padding: 10px 8px;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-            color: #374151;
-            background: #f9fafb;
-            transition: all 0.15s ease;
-        }
-        .settings-theme-btn:hover {
-            background: #f3f4f6;
-        }
-        .settings-theme-btn.active {
-            background: #ff4d4d;
-            border-color: #ff4d4d;
-            color: #ffffff;
         }
     </style>
 </head>
@@ -1159,17 +1139,6 @@
                     </div>
 
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">ธีมของระบบ</p>
-                        <p class="text-xs text-gray-400 mb-4">เลือกรูปแบบธีมที่ต้องการใช้งาน</p>
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                            <button onclick="switchTheme('warehouse')" id="settings-theme-warehouse" class="settings-theme-btn">Dark Warehouse</button>
-                            <button onclick="switchTheme('holographic')" id="settings-theme-holographic" class="settings-theme-btn">Holographic Blue</button>
-                            <button onclick="switchTheme('neon')" id="settings-theme-neon" class="settings-theme-btn">Sci-Fi Neon</button>
-                            <button onclick="switchTheme('mech')" id="settings-theme-mech" class="settings-theme-btn">Mech Neon</button>
-                        </div>
-                    </div>
-
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
                         <div class="flex items-center justify-between mb-1">
                             <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">ประเภทของผู้ใช้งาน (Role)</p>
                             <button onclick="openRoleInfoModal()" title="ดูสิทธิ์การใช้งานของแต่ละ Role" class="w-6 h-6 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold text-xs transition">?</button>
@@ -1659,6 +1628,8 @@
                         changed = true;
                     }
                 });
+                // เติมรูปจากฐานข้อมูลกลาง (Firestore) ให้กับรายการที่เครื่องนี้ยังไม่มีรูปในเครื่อง (เช่น สินค้าที่ถ่ายรูปจากอุปกรณ์อื่น)
+                if (typeof applyCloudPhotosToCurrentData === 'function') applyCloudPhotosToCurrentData();
                 if (changed && typeof renderExcelTable === 'function' && document.getElementById('inventoryTableBody')) {
                     renderExcelTable(currentLoadedData);
                 }
@@ -1725,6 +1696,7 @@
         let db = null;              // อินสแตนซ์ Firestore
         let firestoreApi = null;    // เก็บฟังก์ชันจาก Firestore SDK ที่ import มา (collection, doc, getDocs, setDoc, deleteDoc, onSnapshot)
         let cloudReady = false;     // true เมื่อเชื่อมต่อ Firebase สำเร็จแล้ว
+        let cloudPhotoMap = {};     // แคชรูปสินค้า (base64) ที่ดึงมาจาก Firestore เก็บเป็น { productId: dataUrl }
 
         // โหลด Firebase SDK แบบ dynamic import (ไม่ต้องใช้ <script type="module"> แยก)
         async function initFirebase() {
@@ -1732,6 +1704,111 @@
             firestoreApi = await import("https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js");
             const app = initializeApp(firebaseConfig);
             db = firestoreApi.getFirestore(app);
+        }
+
+        // ===== ระบบซิงก์รูปสินค้าผ่าน Firestore โดยตรง (ไม่ใช้ Firebase Storage เพราะต้องผูกบัตรเครดิต/แผน Blaze) =====
+        // แต่ละรูปเก็บเป็นเอกสารแยกใน collection "productPhotos" (doc ID = รหัสสินค้า) เพื่อไม่ให้เอกสารรวมข้อมูลสต๊อกบวมเกิน 1MB
+        // ก่อนอัปโหลดจะบีบอัด/ย่อขนาดรูปให้เล็กพอเสมอ (ขีดจำกัดเอกสารของ Firestore คือ 1MB ต่อเอกสาร)
+
+        // ย่อขนาด + บีบอัดคุณภาพรูปด้วย canvas ให้ได้ไฟล์เล็กลงตามที่กำหนด
+        function compressImageDataUrl(dataUrl, maxDim, quality) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => {
+                    let { width, height } = img;
+                    if (width > maxDim || height > maxDim) {
+                        if (width > height) {
+                            height = Math.round(height * (maxDim / width));
+                            width = maxDim;
+                        } else {
+                            width = Math.round(width * (maxDim / height));
+                            height = maxDim;
+                        }
+                    }
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                    resolve(canvas.toDataURL('image/jpeg', quality));
+                };
+                img.onerror = () => reject(new Error('โหลดรูปเพื่อบีบอัดไม่สำเร็จ'));
+                img.src = dataUrl;
+            });
+        }
+
+        // บีบอัดรูปแบบวนซ้ำจนกว่าจะเล็กพอสำหรับเก็บใน Firestore (เผื่อพื้นที่ไว้ให้ปลอดภัย ไม่เกิน ~700KB)
+        async function compressImageForCloud(dataUrl) {
+            let maxDim = 900;
+            let quality = 0.7;
+            let result = await compressImageDataUrl(dataUrl, maxDim, quality);
+            let attempts = 0;
+            while (result.length > 700000 && attempts < 4) {
+                quality = Math.max(0.35, quality - 0.15);
+                maxDim = Math.max(500, maxDim - 150);
+                result = await compressImageDataUrl(dataUrl, maxDim, quality);
+                attempts++;
+            }
+            return result;
+        }
+
+        // บีบอัดรูปแล้วอัปโหลด (เขียนทับ) ขึ้น Firestore เป็นเอกสารเดี่ยวของสินค้าชิ้นนั้น คืนค่าเป็นรูปที่บีบอัดแล้ว (หรือ null ถ้าไม่สำเร็จ)
+        async function uploadPhotoToCloud(productId, dataUrl) {
+            if (!cloudReady || !db) return null;
+            try {
+                const compressed = await compressImageForCloud(dataUrl);
+                await withTimeout(
+                    firestoreApi.setDoc(firestoreApi.doc(db, 'productPhotos', productId), { photo: compressed, updatedAt: Date.now() }),
+                    20000,
+                    'อัปโหลดรูปสินค้า'
+                );
+                cloudPhotoMap[productId] = compressed;
+                return compressed;
+            } catch (err) {
+                console.error(`อัปโหลดรูปสินค้า "${productId}" ขึ้นฐานข้อมูลกลางไม่สำเร็จ:`, err);
+                return null;
+            }
+        }
+
+        // นำรูปจาก cloudPhotoMap มาใส่ให้กับ currentLoadedData (เฉพาะรายการที่ยังไม่มีรูปในเครื่องนี้ ให้รูปในเครื่องนี้มีสิทธิ์เหนือกว่าเสมอ)
+        function applyCloudPhotosToCurrentData() {
+            let changed = false;
+            currentLoadedData.forEach(item => {
+                if (!item.photo && cloudPhotoMap[item.id]) {
+                    item.photo = cloudPhotoMap[item.id];
+                    changed = true;
+                }
+            });
+            if (changed) {
+                const p = document.getElementById('checkPage');
+                if (p && !p.classList.contains('hidden') && typeof filterTableData === 'function') filterTableData(false);
+            }
+        }
+
+        // โหลดรูปสินค้าทั้งหมดจาก Firestore ครั้งแรก แล้วเปิดฟังการเปลี่ยนแปลงแบบเรียลไทม์ (มีคนถ่ายรูปใหม่จากอุปกรณ์อื่น จะอัปเดตให้ทันที)
+        async function loadPhotosFromCloud() {
+            if (!cloudReady || !db) return;
+            try {
+                const photosCol = firestoreApi.collection(db, 'productPhotos');
+                const snapshot = await withTimeout(firestoreApi.getDocs(photosCol), 20000, 'โหลดรูปสินค้าจากฐานข้อมูลกลาง');
+                snapshot.forEach(docSnap => { cloudPhotoMap[docSnap.id] = docSnap.data().photo; });
+                applyCloudPhotosToCurrentData();
+
+                firestoreApi.onSnapshot(photosCol, (snap) => {
+                    snap.docChanges().forEach(change => {
+                        if (change.type === 'removed') {
+                            delete cloudPhotoMap[change.doc.id];
+                        } else {
+                            cloudPhotoMap[change.doc.id] = change.doc.data().photo;
+                            const item = currentLoadedData.find(p => p.id === change.doc.id);
+                            if (item) item.photo = change.doc.data().photo;
+                        }
+                    });
+                    const p = document.getElementById('checkPage');
+                    if (p && !p.classList.contains('hidden') && typeof filterTableData === 'function') filterTableData(false);
+                });
+            } catch (err) {
+                console.error('เชื่อมต่อรูปสินค้ากับฐานข้อมูลกลางไม่สำเร็จ (จะใช้รูปที่เก็บไว้ในเครื่องนี้แทน):', err);
+            }
         }
 
         // ตัวช่วยกันไม่ให้รอ Promise ค้างนานเกินไป (เช่น เน็ตหลุด/ตั้งค่า Firebase ผิด) — ถ้าเกินเวลาที่กำหนดจะถือว่าล้มเหลวแล้วไปต่อทันที
@@ -1925,6 +2002,7 @@
                 await loadAppDataFromCloud();
                 if (btnLogin) btnLogin.disabled = false;
                 checkAuth();
+                loadPhotosFromCloud(); // โหลดรูปสินค้าจากฐานข้อมูลกลางแบบไม่บล็อกหน้าจอ (รูปอาจมีเยอะ ให้ค่อยๆ ทยอยขึ้นทีหลังได้)
             }
         });
 
@@ -3926,26 +4004,7 @@
                 }
             });
         }
-        // Theme Switcher Functionality
-        function switchTheme(themeName) {
-          const link = document.getElementById('themeLink');
-          const themeMap = {
-            warehouse: 'style-warehouse.css',
-            holographic: 'style-holographic.css',
-            neon: 'style-neon.css',
-            mech: 'style-mech.css'
-          };
-          
-          link.href = themeMap[themeName];
-          localStorage.setItem('selectedTheme', themeName);
-
-          // Update active state on the Settings page theme buttons
-          document.querySelectorAll('.settings-theme-btn').forEach(btn => {
-            btn.classList.remove('active');
-          });
-          const settingsBtn = document.getElementById('settings-theme-' + themeName);
-          if (settingsBtn) settingsBtn.classList.add('active');
-        }
+        // Theme: ระบบใช้ธีม Dark Warehouse เพียงธีมเดียวเท่านั้น (ตัดตัวเลือกธีมอื่นออกทั้งหมดแล้ว)
 
         // ===== Settings page sync =====
         function syncSettingsPage() {
@@ -3955,11 +4014,6 @@
 
             const soundToggle = document.getElementById('soundToggleSettings');
             if (soundToggle) soundToggle.checked = !isClickSoundMuted;
-
-            const savedTheme = localStorage.getItem('selectedTheme') || 'warehouse';
-            document.querySelectorAll('.settings-theme-btn').forEach(btn => btn.classList.remove('active'));
-            const activeBtn = document.getElementById('settings-theme-' + savedTheme);
-            if (activeBtn) activeBtn.classList.add('active');
         }
 
         function handleOnboardingToggle(checkbox) {
@@ -4312,17 +4366,22 @@
             if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'กำลังบันทึก...'; }
 
             try {
-                // บันทึกรูปลง IndexedDB (แทน localStorage เดิม เพื่อไม่ให้พื้นที่เก็บข้อมูลเต็ม)
-                await idbSavePhoto(selectedProductData.id, currentPhotoData, {
+                // อัปโหลดรูปขึ้นฐานข้อมูลกลาง (Firestore) ก่อน เพื่อให้ได้เวอร์ชันที่บีบอัดขนาดแล้วมาใช้เก็บทั้งในเครื่องและ Cloud
+                if (saveBtn) saveBtn.textContent = 'กำลังบีบอัด/อัปโหลดรูป...';
+                const cloudCompressedPhoto = await uploadPhotoToCloud(selectedProductData.id, currentPhotoData);
+                const photoToStore = cloudCompressedPhoto || currentPhotoData;
+
+                // บันทึกรูปลง IndexedDB ไว้ด้วย (ใช้แสดงผลทันทีในเครื่องนี้ และเป็นสำรองเผื่อออฟไลน์)
+                await idbSavePhoto(selectedProductData.id, photoToStore, {
                     timestamp: new Date().toLocaleString('th-TH'),
                     empId: sessionStorage.getItem('currentEmpId') || 'ไม่ระบุ'
                 });
 
-                // อัปเดต currentLoadedData ให้มีรูป (เก็บ photo ไว้ใน memory เท่านั้น
-                // ตัว localStorage ของ inventoryData จะไม่มีฟิลด์ photo อีกต่อไป)
+                // อัปเดต currentLoadedData ให้มีรูป (เก็บไว้ใน memory เพื่อแสดงผลทันที
+                // ตัว localStorage ของ inventoryData จะไม่มีฟิลด์ photo อีกต่อไป เพราะรูปแยกไปเก็บใน collection productPhotos แทน)
                 const productIndex = currentLoadedData.findIndex(p => p.id === selectedProductData.id);
                 if (productIndex !== -1) {
-                    currentLoadedData[productIndex].photo = currentPhotoData;
+                    currentLoadedData[productIndex].photo = photoToStore;
                     saveInventoryDataToLocalStorage();
                 }
 
@@ -4331,7 +4390,11 @@
 
                 writeSystemLog("บันทึกรูปสินค้า", `พนักงาน ${sessionStorage.getItem('currentEmpId') || 'ไม่ระบุ'} บันทึกรูปสินค้า ID: ${selectedProductData.id} (${selectedProductData.name})`);
 
-                alert(`บันทึกรูปสินค้า ${selectedProductData.id} เรียบร้อยแล้ว`);
+                if (cloudReady && !cloudCompressedPhoto) {
+                    alert(`บันทึกรูปสินค้า ${selectedProductData.id} ในเครื่องนี้สำเร็จ แต่อัปโหลดขึ้นฐานข้อมูลกลางไม่สำเร็จ (เช็คอินเทอร์เน็ต) รูปนี้จะยังไม่ลิงก์กับอุปกรณ์อื่นจนกว่าจะลองบันทึกใหม่`);
+                } else {
+                    alert(`บันทึกรูปสินค้า ${selectedProductData.id} เรียบร้อยแล้ว`);
+                }
                 clearPhoto();
                 selectedProductData = null;
                 document.getElementById('selectedProductId').textContent = '-';
@@ -4352,12 +4415,6 @@
                 stopCamera();
             }
         }
-
-        // Load saved theme on page load
-        window.addEventListener('load', function() {
-          const savedTheme = localStorage.getItem('selectedTheme') || 'warehouse';
-          switchTheme(savedTheme);
-        });
 
     </script>
 </body>
